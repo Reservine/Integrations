@@ -6,9 +6,12 @@ async function release() {
   // Dynamic import for inquirer
   const inquirer = (await import('inquirer')).default;
 
-  const buttonPackageJsonPath = path.resolve(__dirname, '../apps/reservine-button/package.json');
+  const buttonPackageJsonPath = path.resolve(
+    __dirname,
+    '../apps/reservine-email-renderer/package.json',
+  );
 
-  // Load the package.json for reservine-button
+  // Load the package.json for reservine-email-renderer
   const packageJson = JSON.parse(fs.readFileSync(buttonPackageJsonPath, 'utf-8'));
 
   // Prompt for version bump type
@@ -31,7 +34,7 @@ async function release() {
     // Bump version locally
     const oldVersion = packageJson.version;
     const newVersion = execSync(
-      `npm version ${versionType} --no-git-tag-version --prefix ./apps/reservine-button`,
+      `npm version ${versionType} --no-git-tag-version --prefix ./apps/reservine-email-renderer`,
     )
       .toString()
       .trim();
@@ -40,16 +43,15 @@ async function release() {
 
     // Build the library
     console.log('\nBuilding the library...');
-    runCommand('pnpm run build:reservine-button');
+    runCommand('pnpm run build:reservine-email-renderer');
 
     // Copy lightweight package.json into dist folder
-    const distFolder = path.resolve(__dirname, '../dist/apps/reservine-button');
+    const distFolder = path.resolve(__dirname, '../dist/apps/reservine-email-renderer');
     const packageJsonForDist = {
-      name: 'reservine-button',
+      name: 'reservine-email-renderer',
       version: newVersion,
-      main: 'reservine-button.umd.js',
-      module: 'reservine-button.mjs',
-      files: ['reservine-button.mjs', 'reservine-button.umd.js'],
+      main: 'reservine-email-renderer.umd.js',
+      files: ['reservine-email-renderer.umd.js'],
       license: 'MIT',
     };
 
@@ -63,11 +65,11 @@ async function release() {
     runCommand(`npm publish ${distFolder} --access public`);
 
     // Commit and push changes
-    console.log('\nCommitting and tagging the release...');
+    /*  console.log('\nCommitting and tagging the release...');
     runCommand('git add .');
-    runCommand(`git commit -m "chore: release reservine-button v${newVersion}"`);
-    runCommand(`git tag -a v${newVersion} -m "Release reservine-button v${newVersion}"`);
-    runCommand('git push --follow-tags');
+    runCommand(`git commit -m "chore: release reservine-email-renderer v${newVersion}"`);
+    runCommand(`git tag -a v${newVersion} -m "Release reservine-email-renderer v${newVersion}"`);
+    runCommand('git push --follow-tags');*/
 
     console.log('\n✅ Release complete!');
   } catch (error) {
