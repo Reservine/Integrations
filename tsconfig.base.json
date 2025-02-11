@@ -1,0 +1,32 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "baseUrl": ".",
+    "downlevelIteration": true,
+    "importHelpers": true,
+    "module": "esnext",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "strictPropertyInitialization": false,
+    "resolveJsonModule": true,
+    "target": "es2022",
+    "typeRoots": ["node_modules/@types"],
+    "lib": ["es2023", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "types": ["reflect-metadata", "node", "app"],
+    "allowJs": true,
+    "esModuleInterop": true,
+    "useDefineForClassFields": false,
+    "paths": {
+      "@apps/shared/*": ["libs/shared/src/lib/*"],
+    }
+  },
+  "exclude": ["node_modules", "tmp"],
+  "plugins": []
+}

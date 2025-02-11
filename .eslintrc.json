@@ -1,0 +1,83 @@
+{
+  "root": true,
+  "plugins": ["@nx"],
+  "ignorePatterns": ["**/*"],
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx"],
+      "rules": {
+        "@nx/enforce-module-boundaries": [
+          "error",
+          {
+            "enforceBuildableLibDependency": true,
+            "allowCircularSelfDependency": true,
+            "allow": [""],
+            "depConstraints": [
+              {
+                "sourceTag": "type:app",
+                "onlyDependOnLibsWithTags": ["type:lib", "type:publishable-lib"]
+              },
+              {
+                "sourceTag": "type:lib",
+                "onlyDependOnLibsWithTags": ["type:lib", "type:publishable-lib"]
+              },
+              {
+                "sourceTag": "type:publishable-lib",
+                "onlyDependOnLibsWithTags": ["type:publishable-lib"]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["*.ts", "*.tsx"],
+      "extends": ["plugin:@nx/typescript"],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-empty-interface": "off",
+        "@typescript-eslint/no-unused-vars": "warn",
+        "@typescript-eslint/no-inferrable-types": [
+          "error",
+          {
+            "ignoreParameters": true
+          }
+        ],
+        "import/order": [
+          "warn",
+          {
+            "groups": ["builtin", "external", "parent", "sibling", "index"],
+            "newlines-between": "always",
+            "alphabetize": {
+              "order": "asc",
+              "caseInsensitive": true
+            }
+          }
+        ],
+        "no-console": [
+          "warn",
+          {
+            "allow": ["warn", "error"]
+          }
+        ],
+        "no-debugger": "error",
+        "no-duplicate-imports": "error",
+        "prefer-const": "error"
+      },
+      "plugins": ["eslint-plugin-import", "@typescript-eslint"]
+    },
+    {
+      "files": ["*.js", "*.jsx"],
+      "extends": ["plugin:@nx/javascript"],
+      "rules": {
+        "no-unused-vars": "warn",
+        "no-console": [
+          "warn",
+          {
+            "allow": ["warn", "error"]
+          }
+        ]
+      }
+    }
+  ]
+}

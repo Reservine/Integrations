@@ -1,0 +1,19 @@
+{
+  "name": "reservine-button",
+  "version": "0.0.18",
+  "private": false,
+  "main": "./reservine-button.umd.js",
+  "module": "./reservine-button.mjs",
+  "exports": {
+    ".": {
+      "import": "./reservine-button.mjs",
+      "require": "./reservine-button.umd.js"
+    }
+  },
+  "files": [
+    "reservine-button.mjs",
+    "reservine-button.umd.js",
+    "index.d.ts"
+  ],
+  "license": "MIT"
+}
