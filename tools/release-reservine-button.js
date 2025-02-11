@@ -34,7 +34,7 @@ async function release() {
       `npm version ${versionType} --no-git-tag-version --prefix ./apps/reservine-button`,
     )
       .toString()
-      .trim();
+      .trim().replace('v', '')
 
     console.log(`✅ Version bumped from ${oldVersion} to ${newVersion}`);
 
