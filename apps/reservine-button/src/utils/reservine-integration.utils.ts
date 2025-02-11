@@ -1,27 +1,20 @@
 /**
- * Detects browser zoom level and calculates adjusted font size to maintain correct scaling.
- * Uses layout width vs visual width comparison to detect actual browser zoom,
- * ignoring device pixel ratio to avoid counting high DPI screens as zoomed.
+ * Calculates adjusted font size based on browser zoom level using visualViewport.scale.
+ * Falls back to default 16px if visualViewport is not supported.
+ * This helps maintain consistent text size when the page is zoomed.
  *
- * @param defaultFontSize - Base font size in pixels to adjust
+ * @param defaultFontSize - Base font size in pixels (defaults to 16)
  * @returns Adjusted font size in pixels
  */
-export function getAdjustedFontSize(defaultFontSize: number = 16): number {
-  // Get the current zoom level by comparing layout width to visual width
-  const layoutWidth: number = document.documentElement.getBoundingClientRect().width;
-  const visualWidth: number = window.visualViewport
-    ? window.visualViewport.width
-    : window.innerWidth;
-
-  // Calculate zoom without device pixel ratio
-  const zoomLevel: number = layoutWidth / visualWidth;
-
-  // Guard against invalid values
-  if (!isFinite(zoomLevel) || zoomLevel <= 0) {
-    console.warn('Invalid zoom level detected, using default font size');
+export function getAdjustedFontSize(defaultFontSize = 16) {
+  // Check if visualViewport is supported and has valid scale
+  if (!window.visualViewport?.scale) {
     return defaultFontSize;
   }
 
+  // Get zoom scale directly from visualViewport
+  const zoomScale = window.visualViewport.scale;
+
   // Adjust base font size inversely to zoom
-  return defaultFontSize / zoomLevel;
+  return defaultFontSize / zoomScale;
 }
