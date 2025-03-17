@@ -1,6 +1,6 @@
 {
   "name": "reservine-button",
-  "version": "0.0.20",
+  "version": "0.0.22",
   "private": false,
   "main": "./reservine-button.umd.js",
   "module": "./reservine-button.mjs",

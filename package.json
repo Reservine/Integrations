@@ -4,7 +4,7 @@
   "license": "public",
   "scripts": {
     "serve:reservine-button": "nx serve reservine-button --port 3333",
-    "build:reservine-button": "nx build reservine-button --production --emptyOutDir --skip-nx-cache && cp ./dist/apps/reservine-button/reservine-button.umd.js ./libs/shared/src/lib/scripts",
+    "build:reservine-button": "nx build reservine-button --production --emptyOutDir --skip-nx-cache",
     "release:reservine-button": "node tools/release-reservine-button.js"
   },
   "private": true,

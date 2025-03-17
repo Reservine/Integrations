@@ -24,7 +24,6 @@
     Outline = 'outline',
   }
 
-
   enum ButtonWidth {
     Auto = 'auto',
     Full = 'full',
@@ -33,13 +32,13 @@
   export let text: string = '';
   export let buttonText: string = ''; // For backwards compatibility
 
-  export let reservationUrl: string = '';
+  export let reservationUrl: string = ''; // For backwards compatibility
+  export let partner: string = '';
 
   export let size: ButtonSize = ButtonSize.Medium;
   export let width: ButtonWidth = ButtonWidth.Auto;
   export let color: string = '#ffffff'; // Hex color only - for now
   export let borderRadius: string = '6px';
-
 
   export let asWrapper: boolean = false;
 
@@ -67,22 +66,79 @@
   const iframeSrc = writable('');
   const pendingIframeSrc = writable('');
 
+  /**
+   * Constructs a proper URL ensuring no double slashes and adding cache busting
+   * @param baseUrl - The base URL to start with
+   * @param path - Optional path to append
+   * @returns Properly formatted URL
+   */
+  const normalizeUrl = (baseUrl: string, path?: string): URL => {
+    // Create URL object (handles relative URLs too by using current origin)
+    let url: URL;
+    try {
+      // Try to parse as absolute URL
+      url = new URL(baseUrl);
+    } catch (e) {
+      // If not absolute, prepend origin and try again
+      url = new URL(baseUrl, window.location.origin);
+    }
+
+    // If path is provided, make sure we handle it correctly
+    if (path) {
+      // Ensure path starts with slash and doesn't create double slashes
+      const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+
+      // Ensure the pathname ends with a slash before appending
+      let pathname = url.pathname;
+      pathname = pathname.endsWith('/') ? pathname : `${pathname}/`;
+
+      // Remove leading slash from path if it exists
+      const cleanPath = normalizedPath.startsWith('/') ? normalizedPath.substring(1) : normalizedPath;
+
+      // Set the combined pathname
+      url.pathname = `${pathname}${cleanPath}`;
+    }
+
+    return url;
+  };
+
   const constructReservationUrl = (adjustedFontSize?: number) => {
-    let url = new URL(reservationUrl, window.location.origin);
-    if (branch) url.pathname += `/branch/${branch}`;
+    // Determine the base URL based on whether a partner is provided
+    let baseUrl: string;
+
+    if (partner) {
+      baseUrl = `https://${partner}.reservine.me`;
+    } else {
+      baseUrl = reservationUrl;
+    }
+
+    // Create URL object from the determined base URL
+    let url = normalizeUrl(baseUrl);
+
+    // Add branch as a path parameter if provided
+    if (branch) {
+      // Create proper branch path
+      url = normalizeUrl(url.toString(), `branch/${branch}`);
+    }
+
+    // Add service and employee as query parameters if provided
     if (service) url.searchParams.set(IntegrationConstants.service, service.toString());
     if (employee) url.searchParams.set(IntegrationConstants.employee, employee.toString());
 
+    // Handle promo code from query parameters
     const queryParams = new URLSearchParams(window.location.search);
-
     const promo = queryParams.get(IntegrationConstants.promo) || queryParams.get('p');
     if (promo) {
       url.searchParams.set(IntegrationConstants.promo, promo);
     }
 
+    // Add adjusted font size if provided
     if (adjustedFontSize) {
       url.searchParams.set(IntegrationConstants.adjustedFontSize, adjustedFontSize.toString());
     }
+
+    // Add cache busting parameter with current timestamp
+    url.searchParams.set('_cb', Date.now().toString());
 
     return url.toString();
   };
@@ -101,8 +157,6 @@
 
     return () => window.removeEventListener('message', handleMessage);
   });
-
-
 
   const handleOpenChange = (isOpen: boolean) => {
     open.set(isOpen);
@@ -252,7 +306,7 @@
 
 <Drawer.Root bind:open={$open} onOpenChange={handleOpenChange}>
   <Drawer.Trigger
-    style="--bg-color: {color}; --hover-bg-color: {hoverColor}; --text-color: {textColor}; --border-radius: {borderRadius}; {asWrapper ? 'all: unset; cursor:pointer;' : `${buttonSizes[size]}`}`"
+    style="--bg-color: {color}; --hover-bg-color: {hoverColor}; --text-color: {textColor}; --border-radius: {borderRadius}; {asWrapper ? 'all: unset; cursor:pointer;' : `${buttonSizes[size]}`}"
     class="{asWrapper ? 'as-wrapper' : `reservine-button ${appearance}`} {width === ButtonWidth.Full ? 'full-width' : 'auto-width'}"
   >
     {#if asWrapper}
