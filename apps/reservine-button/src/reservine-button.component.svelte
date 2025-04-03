@@ -34,6 +34,7 @@
 
   export let reservationUrl: string = ''; // For backwards compatibility
   export let partner: string = '';
+  export let reservineTheme: string = '';
 
   export let size: ButtonSize = ButtonSize.Medium;
   export let width: ButtonWidth = ButtonWidth.Auto;
@@ -130,6 +131,10 @@
     const promo = queryParams.get(IntegrationConstants.promo) || queryParams.get('p');
     if (promo) {
       url.searchParams.set(IntegrationConstants.promo, promo);
+    }
+
+    if (reservineTheme) {
+      url.searchParams.set(IntegrationConstants.reservineTheme, reservineTheme);
     }
 
     // Add adjusted font size if provided

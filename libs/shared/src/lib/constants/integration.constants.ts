@@ -5,4 +5,5 @@ export class IntegrationConstants {
   static employee = 'employee';
   static adjustedFontSize = 'adjustedFontSize';
   static reservineNavigation = 'reservine-navigation';
+  static reservineTheme = 'reservine-theme';
 }
