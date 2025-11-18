@@ -2,6 +2,7 @@
 
 <script lang="ts">
   import * as Drawer from './components/drawer';
+  import * as Modal from './components/modal';
   import { writable } from 'svelte/store';
   import { onMount } from 'svelte';
 
@@ -48,6 +49,7 @@
   export let branchId: number | null = null; // For backwards compatibility
   export let service: number | null = null;
   export let employee: number | null = null;
+  export let showGallery: boolean | null = null;
   export let disableUseOfAdjustedFontSize: boolean = false;
 
   if (color.length === 4) {
@@ -66,6 +68,47 @@
   const open = writable(false);
   const iframeSrc = writable('');
   const pendingIframeSrc = writable('');
+
+  // Device detection: use modal on desktop (non-touch or >= 1024px), drawer on mobile/touch
+  let useModal = false;
+  let modalContentRef: any;
+  let iframeElement: HTMLIFrameElement;
+
+  const detectDevice = () => {
+    const isDesktopSize = window.matchMedia('(min-width: 1024px)').matches;
+    const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+
+    // Use modal if desktop size and NOT a touch device, otherwise use drawer
+    useModal = isDesktopSize && !isTouchDevice;
+  };
+
+  // Handle iframe rendering for modal (outside shadow DOM)
+  $: if (useModal && modalContentRef && $open) {
+    const slotContent = modalContentRef.getContentElement();
+    if (slotContent && !iframeElement) {
+      iframeElement = document.createElement('iframe');
+      iframeElement.title = 'Reservine';
+      iframeElement.allow = 'payment';
+      iframeElement.tabIndex = -1;
+      iframeElement.style.cssText = 'width: 100%!important; height: 100%!important; border: none!important;background:black';
+
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'width: 100%!important; height: 100%!important;';
+      wrapper.appendChild(iframeElement);
+
+      slotContent.appendChild(wrapper);
+    }
+
+    if (iframeElement) {
+      iframeElement.src = $iframeSrc;
+    }
+  } else if (!$open && iframeElement) {
+    // Clean up iframe when modal closes
+    if (iframeElement.parentNode) {
+      iframeElement.parentNode.parentNode?.removeChild(iframeElement.parentNode);
+    }
+    iframeElement = null as any;
+  }
 
   /**
    * Constructs a proper URL ensuring no double slashes and adding cache busting
@@ -137,6 +180,11 @@
       url.searchParams.set(IntegrationConstants.reservineTheme, reservineTheme);
     }
 
+    // Add showGallery if provided
+    if (showGallery !== null) {
+      url.searchParams.set(IntegrationConstants.showGallery, showGallery.toString());
+    }
+
     // Add adjusted font size if provided
     if (adjustedFontSize) {
       url.searchParams.set(IntegrationConstants.adjustedFontSize, adjustedFontSize.toString());
@@ -158,9 +206,17 @@
 
   onMount(() => {
     injectMainStyles();
-    window.addEventListener('message', handleMessage);
+    detectDevice();
 
-    return () => window.removeEventListener('message', handleMessage);
+    const handleResize = () => detectDevice();
+
+    window.addEventListener('message', handleMessage);
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+      window.removeEventListener('resize', handleResize);
+    };
   });
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -309,27 +365,44 @@
   }
 </style>
 
-<Drawer.Root bind:open={$open} onOpenChange={handleOpenChange}>
-  <Drawer.Trigger
-    style="--bg-color: {color}; --hover-bg-color: {hoverColor}; --text-color: {textColor}; --border-radius: {borderRadius}; {asWrapper ? 'all: unset; cursor:pointer;' : `${buttonSizes[size]}`}"
-    class="{asWrapper ? 'as-wrapper' : `reservine-button ${appearance}`} {width === ButtonWidth.Full ? 'full-width' : 'auto-width'}"
-  >
-    {#if asWrapper}
-      <slot />
-    {:else}
-      <span>{displayText}</span>
-    {/if}
-  </Drawer.Trigger>
+{#if useModal}
+  <Modal.Root bind:open={$open} onOpenChange={handleOpenChange}>
+    <Modal.Trigger
+      style="--bg-color: {color}; --hover-bg-color: {hoverColor}; --text-color: {textColor}; --border-radius: {borderRadius}; {asWrapper ? 'all: unset; cursor:pointer;' : `${buttonSizes[size]}`}"
+      class="{asWrapper ? 'as-wrapper' : `reservine-button ${appearance}`} {width === ButtonWidth.Full ? 'full-width' : 'auto-width'}"
+    >
+      {#if asWrapper}
+        <slot />
+      {:else}
+        <span>{displayText}</span>
+      {/if}
+    </Modal.Trigger>
 
-  <Drawer.Content class="r-drawer-content">
-    <div style="width: 100%!important; height: 100%!important;">
-      <iframe
-        title="Reservine"
-        allow="payment"
-        tabindex="-1"
-        src={$iframeSrc}
-        style="width: 100%!important; height: 100%!important; border: none!important;"
-      ></iframe>
-    </div>
-  </Drawer.Content>
-</Drawer.Root>
+    <Modal.Content bind:this={modalContentRef} />
+  </Modal.Root>
+{:else}
+  <Drawer.Root bind:open={$open} onOpenChange={handleOpenChange}>
+    <Drawer.Trigger
+      style="--bg-color: {color}; --hover-bg-color: {hoverColor}; --text-color: {textColor}; --border-radius: {borderRadius}; {asWrapper ? 'all: unset; cursor:pointer;' : `${buttonSizes[size]}`}"
+      class="{asWrapper ? 'as-wrapper' : `reservine-button ${appearance}`} {width === ButtonWidth.Full ? 'full-width' : 'auto-width'}"
+    >
+      {#if asWrapper}
+        <slot />
+      {:else}
+        <span>{displayText}</span>
+      {/if}
+    </Drawer.Trigger>
+
+    <Drawer.Content class="r-drawer-content">
+      <div style="width: 100%!important; height: 100%!important;">
+        <iframe
+          title="Reservine"
+          allow="payment"
+          tabindex="-1"
+          src={$iframeSrc}
+          style="width: 100%!important; height: 100%!important; border: none!important;"
+        ></iframe>
+      </div>
+    </Drawer.Content>
+  </Drawer.Root>
+{/if}

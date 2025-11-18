@@ -6,4 +6,5 @@ export class IntegrationConstants {
   static adjustedFontSize = 'adjustedFontSize';
   static reservineNavigation = 'reservine-navigation';
   static reservineTheme = 'reservine-theme';
+  static showGallery = "showGallery"
 }

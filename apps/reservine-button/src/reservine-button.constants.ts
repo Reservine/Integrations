@@ -196,4 +196,93 @@ export const reservineButtonStyles = `
       user-select: none;
     }
   }
+
+  .r-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999999998;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: r-modal-fade-in 0.2s ease-out;
+  }
+
+  .r-modal-content {
+    font-size: var(--reservine-font-size);
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 999999999;
+    max-width: 75em;
+    width: calc(100vw - 2em);
+    height: calc(100vh - 4em);
+    max-height: 56.25em;
+    animation: r-modal-slide-in 0.3s ease-out;
+  }
+
+  @media (min-width: 1024px) {
+    .r-modal-content {
+      width: 90vw;
+      height: 90vh;
+    }
+  }
+
+  .r-modal-close {
+    position: absolute !important;
+    top: -3em !important;
+    left: 0 !important;
+    cursor: pointer !important;
+    width: 2em !important;
+    height: 2em !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    border-radius: 50% !important;
+    border: none !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #fff !important;
+    outline: none !important;
+    z-index: 10 !important;
+    transition: background-color 0.2s ease-in-out !important;
+  }
+
+  .r-modal-close:hover {
+    background-color: rgba(0, 0, 0, 0.7) !important;
+  }
+
+  .r-modal-slot-content {
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    border-radius: 0.625em !important;
+    border: 0.0625em solid #1e293b !important;
+    background-color: #121417 !important;
+    overflow: hidden !important;
+    overscroll-behavior: contain !important;
+    outline: none !important;
+  }
+
+  @keyframes r-modal-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes r-modal-slide-in {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -48%);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%);
+    }
+  }
 `;
