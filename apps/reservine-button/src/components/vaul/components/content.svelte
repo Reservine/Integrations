@@ -36,9 +36,9 @@
 	on:touchmove={(e) => {
 		onDrag(e);
 	}}
-	data-vaul-drawer=""
-	data-vaul-drawer-direction={$direction}
-	data-vaul-drawer-visible={$visible ? "true" : "false"}
+	data-reservine-drawer=""
+	data-reservine-drawer-direction={$direction}
+	data-reservine-drawer-visible={$visible ? "true" : "false"}
 	{...$$restProps}
 >
 	<Visible />

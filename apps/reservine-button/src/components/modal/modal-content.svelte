@@ -9,6 +9,32 @@
   let contentElement: HTMLDivElement;
   let closeButtonElement: HTMLButtonElement;
 
+  // The modal scroll-locks the HOST page's <body>. Snapshot the exact inline
+  // declaration (value + priority) so we can put it back byte-for-byte instead of
+  // blanking a value the host page set itself.
+  let previousBodyOverflow: { value: string; priority: string } | null = null;
+
+  const lockBodyScroll = () => {
+    if (previousBodyOverflow !== null) return;
+    previousBodyOverflow = {
+      value: document.body.style.getPropertyValue('overflow'),
+      priority: document.body.style.getPropertyPriority('overflow'),
+    };
+    document.body.style.setProperty('overflow', 'hidden');
+  };
+
+  const unlockBodyScroll = () => {
+    if (previousBodyOverflow === null) return;
+    const { value, priority } = previousBodyOverflow;
+    previousBodyOverflow = null;
+
+    if (value) {
+      document.body.style.setProperty('overflow', value, priority);
+    } else {
+      document.body.style.removeProperty('overflow');
+    }
+  };
+
   onMount(() => {
     // Create portal target outside shadow DOM
     portalTarget = document.createElement('div');
@@ -67,7 +93,7 @@
       portalTarget.appendChild(contentElement);
 
       // Prevent body scroll when modal is open
-      document.body.style.overflow = 'hidden';
+      lockBodyScroll();
     } else {
       // Clean up
       if (overlayElement && overlayElement.parentNode) {
@@ -79,7 +105,7 @@
       if (contentElement && contentElement.parentNode) {
         contentElement.parentNode.removeChild(contentElement);
       }
-      document.body.style.overflow = '';
+      unlockBodyScroll();
     }
   }
 
@@ -90,7 +116,7 @@
     if (closeButtonElement) {
       closeButtonElement.removeEventListener('click', close);
     }
-    document.body.style.overflow = '';
+    unlockBodyScroll();
   });
 
   export function getContentElement() {

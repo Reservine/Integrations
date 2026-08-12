@@ -3,7 +3,6 @@
 <script lang="ts">
   import { writable } from 'svelte/store';
   import { onMount } from 'svelte';
-  import { reservineButtonStyles } from './reservine-button.constants';
 
   export let reservationUrl: string = '';
 
@@ -40,19 +39,9 @@
   });
 
 
-  const injectStyles = () => {
-    if (!document.getElementById('reservine-button-styles')) {
-      const styleElement = document.createElement('style');
-      styleElement.id = 'reservine-button-styles';
-      styleElement.textContent = reservineButtonStyles;
-      document.head.appendChild(styleElement);
-    }
-  };
-
-
-  onMount(() => {
-    injectStyles();
-  });
+  // NOTE: this component renders nothing but a fully inline-styled <iframe> inside
+  // its own shadow root, so it deliberately injects NO stylesheet into the host
+  // page. (It used to inject the drawer/modal stylesheet, none of which it uses.)
 </script>
 
 

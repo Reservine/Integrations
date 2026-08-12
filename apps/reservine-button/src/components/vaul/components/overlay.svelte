@@ -18,9 +18,9 @@
 <DialogPrimitive.Overlay
 	on:mouseup={onRelease}
 	bind:el={$overlayRef}
-	data-vaul-drawer-visible={$visible ? "true" : "false"}
-	data-vaul-overlay=""
-	data-vaul-snap-points={$isOpen && hasSnapPoints ? "true" : "false"}
-	data-vaul-snap-points-overlay={$isOpen && $shouldFade ? "true" : "false"}
+	data-reservine-drawer-visible={$visible ? "true" : "false"}
+	data-reservine-overlay=""
+	data-reservine-snap-points={$isOpen && hasSnapPoints ? "true" : "false"}
+	data-reservine-snap-points-overlay={$isOpen && $shouldFade ? "true" : "false"}
 	{...$$restProps}
 />

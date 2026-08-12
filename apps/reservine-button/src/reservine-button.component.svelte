@@ -6,7 +6,7 @@
   import { writable } from 'svelte/store';
   import { onMount } from 'svelte';
 
-  import { reservineButtonStyles } from './reservine-button.constants';
+  import { reservineButtonStyles, reservineFontSizeScope } from './reservine-button.constants';
   import { getAdjustedFontSize } from './utils/reservine-integration.utils';
   import { IntegrationConstants } from '@apps/shared/constants/integration.constants';
   import { ResConsole } from '@apps/shared/constants/console.constants';
@@ -295,6 +295,45 @@
     [ButtonSize.Large]: 'height: 3.5rem; font-size: 1rem; padding: 0 1rem;',
   };
 
+  $: isFullWidth = width === ButtonWidth.Full;
+
+  /**
+   * The trigger's inline style.
+   *
+   * `width: 100%` has to live here rather than in the stylesheet: in `asWrapper`
+   * mode the trigger also carries an inline `all: unset`, which wins over any
+   * rule from the shadow stylesheet. Declaring the width *after* `all: unset` in
+   * the same inline declaration is the only thing that actually sticks.
+   * (`all` does not reset custom properties, so the `--*` vars above survive.)
+   */
+  $: triggerStyle =
+    `--bg-color: ${color}; --hover-bg-color: ${hoverColor}; --text-color: ${textColor}; --border-radius: ${borderRadius}; ` +
+    (asWrapper ? 'all: unset; cursor: pointer;' : buttonSizes[size]) +
+    (isFullWidth ? ` width: 100%;${asWrapper ? ' display: block;' : ''}` : '');
+
+  $: triggerClass =
+    `${asWrapper ? 'as-wrapper' : `reservine-button ${appearance}`} ` +
+    (isFullWidth ? 'full-width' : 'auto-width');
+
+  /**
+   * The custom element itself is `display: inline` by default, so a full-width
+   * trigger inside the shadow root would still be boxed by a shrink-wrapped host
+   * element. Flag the host so `:host([data-reservine-full-width])` can stretch it.
+   */
+  let triggerEl: HTMLButtonElement | undefined;
+  $: {
+    const host = (triggerEl?.getRootNode() as ShadowRoot | undefined)?.host as
+      | HTMLElement
+      | undefined;
+    if (host) {
+      if (isFullWidth) {
+        host.setAttribute('data-reservine-full-width', '');
+      } else {
+        host.removeAttribute('data-reservine-full-width');
+      }
+    }
+  }
+
   const injectMainStyles = () => {
     if (!document.getElementById('reservine-button-styles')) {
       const styleElement = document.createElement('style');
@@ -314,16 +353,37 @@
       document.head.appendChild(variableStyleElement);
     }
 
-    // Update the font size only if it has changed
+    // Update the font size only if it has changed.
+    // Scoped to the widget's own containers - never `:root`, so the host page's
+    // custom-property namespace stays untouched.
     const currentFontSize = variableStyleElement.getAttribute('data-adjusted-font-size');
     if (currentFontSize !== adjustedFontSize.toString()) {
-      variableStyleElement.textContent = `:root { --reservine-font-size: ${adjustedFontSize}px; }`;
+      variableStyleElement.textContent = `${reservineFontSizeScope} { --reservine-font-size: ${adjustedFontSize}px; }`;
       variableStyleElement.setAttribute('data-adjusted-font-size', adjustedFontSize.toString());
     }
   };
 </script>
 
 <style>
+  /* Everything in this block lives in the widget's shadow root - it can never
+     reach the host page. Host-page rules live in reservine-button.constants.ts. */
+  :host([data-reservine-full-width]) {
+    display: block;
+    width: 100%;
+  }
+
+  :global(.as-wrapper.full-width),
+  :global(.reservine-button.full-width) {
+    width: 100%;
+  }
+
+  /* Let the host's own slotted markup fill a full-width wrapper trigger.
+     Lowest possible specificity, so host page CSS still wins if it disagrees. */
+  :global(.as-wrapper.full-width ::slotted(*)) {
+    display: block;
+    width: 100%;
+  }
+
   :global(.reservine-button) {
     position: relative;
     border: none;
@@ -367,10 +427,7 @@
 
 {#if useModal}
   <Modal.Root bind:open={$open} onOpenChange={handleOpenChange}>
-    <Modal.Trigger
-      style="--bg-color: {color}; --hover-bg-color: {hoverColor}; --text-color: {textColor}; --border-radius: {borderRadius}; {asWrapper ? 'all: unset; cursor:pointer;' : `${buttonSizes[size]}`}"
-      class="{asWrapper ? 'as-wrapper' : `reservine-button ${appearance}`} {width === ButtonWidth.Full ? 'full-width' : 'auto-width'}"
-    >
+    <Modal.Trigger bind:el={triggerEl} style={triggerStyle} class={triggerClass}>
       {#if asWrapper}
         <slot />
       {:else}
@@ -382,10 +439,7 @@
   </Modal.Root>
 {:else}
   <Drawer.Root bind:open={$open} onOpenChange={handleOpenChange}>
-    <Drawer.Trigger
-      style="--bg-color: {color}; --hover-bg-color: {hoverColor}; --text-color: {textColor}; --border-radius: {borderRadius}; {asWrapper ? 'all: unset; cursor:pointer;' : `${buttonSizes[size]}`}"
-      class="{asWrapper ? 'as-wrapper' : `reservine-button ${appearance}`} {width === ButtonWidth.Full ? 'full-width' : 'auto-width'}"
-    >
+    <Drawer.Trigger bind:el={triggerEl} style={triggerStyle} class={triggerClass}>
       {#if asWrapper}
         <slot />
       {:else}

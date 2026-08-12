@@ -35,7 +35,21 @@ const NESTED_DISPLACEMENT = 16;
 
 const WINDOW_TOP_OFFSET = 26;
 
-const DRAG_CLASS = 'vaul-dragging';
+/**
+ * Namespaced fork of vaul-svelte. Every DOM marker this file writes is prefixed
+ * with `reservine-` so an embedding page that runs its own (real) vaul / shadcn
+ * Drawer can never be matched by our CSS, and its markers can never match ours.
+ * Keep in sync with `reservine-button.constants.ts`.
+ */
+const DRAG_CLASS = 'reservine-drawer-dragging';
+
+/**
+ * Opt-in marker a page can put on its own content wrapper to get the
+ * "scale the background" effect. Namespaced (upstream vaul uses
+ * `data-vaul-drawer-wrapper`) so we never grab a host page's real vaul wrapper
+ * and transform it / repaint its <body> background.
+ */
+const DRAWER_WRAPPER_SELECTOR = '[data-reservine-drawer-wrapper]';
 
 const openDrawerIds = writable<string[]>([]);
 
@@ -193,7 +207,7 @@ export function createVaul(props: CreateVaulProps) {
       return (style: string | null = '') => {
         if ($snapPointsOffset && $snapPointsOffset.length > 0) {
           const styleProp = styleToString({
-            '--snap-point-height': `${$snapPointsOffset[0]}px`,
+            '--reservine-snap-point-height': `${$snapPointsOffset[0]}px`,
           });
           return style + styleProp;
         }
@@ -449,7 +463,7 @@ export function createVaul(props: CreateVaulProps) {
         true,
       );
     }
-    const wrapper = document.querySelector('[data-vaul-drawer-wrapper]');
+    const wrapper = document.querySelector(DRAWER_WRAPPER_SELECTOR);
 
     if (wrapper && $overlayRef && get(shouldScaleBackground)) {
       // Calculate percentageDragged as a fraction (0 to 1)
@@ -482,7 +496,7 @@ export function createVaul(props: CreateVaulProps) {
   }
 
   function scaleBackground(open: boolean, backgroundColor: string | undefined = 'black') {
-    const wrapper = document.querySelector('[data-vaul-drawer-wrapper]');
+    const wrapper = document.querySelector(DRAWER_WRAPPER_SELECTOR);
 
     if (!wrapper || !get(shouldScaleBackground)) return;
     const $direction = get(direction);
@@ -655,7 +669,7 @@ export function createVaul(props: CreateVaulProps) {
     const $drawerRef = get(drawerRef);
     if (!$drawerRef) return;
     const $overlayRef = get(overlayRef);
-    const wrapper = document.querySelector('[data-vaul-drawer-wrapper]');
+    const wrapper = document.querySelector(DRAWER_WRAPPER_SELECTOR);
     const $direction = get(direction);
     const currentSwipeAmount = getTranslate($drawerRef, $direction);
 
@@ -801,7 +815,7 @@ export function createVaul(props: CreateVaulProps) {
         htmlChild.scrollHeight > htmlChild.clientHeight ||
         htmlChild.scrollWidth > htmlChild.clientWidth
       ) {
-        htmlChild.classList.add('vaul-scrollable');
+        htmlChild.classList.add('reservine-drawer-scrollable');
       }
     });
   });

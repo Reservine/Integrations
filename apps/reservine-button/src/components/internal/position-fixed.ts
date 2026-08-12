@@ -3,7 +3,24 @@ import { type Writable, get, writable } from 'svelte/store';
 
 import { addEventListener, effect } from './helpers/index.js';
 
-let previousBodyPosition: Record<string, string> | null = null;
+/**
+ * Every inline style property we write onto the HOST page's <body> while the
+ * drawer is open. We snapshot value *and* priority for each so the body can be
+ * put back exactly as we found it - the widget must never leave a trace on a
+ * page that embeds it.
+ */
+const MANAGED_BODY_PROPS = [
+  'position',
+  'overscroll-behavior',
+  'top',
+  'left',
+  'right',
+  'height',
+] as const;
+
+type BodyStyleSnapshot = Array<{ prop: string; value: string; priority: string }>;
+
+let previousBodyPosition: BodyStyleSnapshot | null = null;
 
 export function handlePositionFixed({
   isOpen,
@@ -23,13 +40,13 @@ export function handlePositionFixed({
     // If previousBodyPosition is already set, don't set it again.
     if (!(previousBodyPosition === null && open)) return;
 
-    previousBodyPosition = {
-      overscrollBehavior: document.body.style.overscrollBehavior,
-      position: document.body.style.position,
-      top: document.body.style.top,
-      left: document.body.style.left,
-      height: document.body.style.height,
-    };
+    // Snapshot every property we are about to touch (including `right`, which the
+    // upstream fork wrote but never recorded) so the host <body> restores exactly.
+    previousBodyPosition = MANAGED_BODY_PROPS.map((prop) => ({
+      prop,
+      value: document.body.style.getPropertyValue(prop),
+      priority: document.body.style.getPropertyPriority(prop),
+    }));
 
     // Update the dom inside an animation frame
     const { scrollX, innerHeight } = window;
@@ -63,13 +80,15 @@ export function handlePositionFixed({
     const y = -parseInt(document.body.style.top, 10);
     const x = -parseInt(document.body.style.left, 10);
 
-    // Restore styles
-    document.body.style.position = previousBodyPosition.position;
-    document.body.style.overscrollBehavior = previousBodyPosition.overscrollBehavior;
-    document.body.style.top = previousBodyPosition.top;
-    document.body.style.left = previousBodyPosition.left;
-    document.body.style.height = previousBodyPosition.height;
-    document.body.style.right = 'unset';
+    // Restore styles exactly as they were, priority included. An empty recorded
+    // value means the host had no inline declaration - remove ours entirely.
+    previousBodyPosition.forEach(({ prop, value, priority }) => {
+      if (value) {
+        document.body.style.setProperty(prop, value, priority);
+      } else {
+        document.body.style.removeProperty(prop);
+      }
+    });
 
     requestAnimationFrame(() => {
       if ($activeUrl !== window.location.href) {
