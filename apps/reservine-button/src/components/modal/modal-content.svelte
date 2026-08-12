@@ -39,6 +39,12 @@
     // Create portal target outside shadow DOM
     portalTarget = document.createElement('div');
     portalTarget.setAttribute('data-reservine-modal-portal', 'true');
+    // `display: contents` keeps this container out of the host page's layout.
+    // It lives in <body> for the whole lifetime of the widget, and as a plain
+    // block it would be a stray flex/grid item (and an extra `gap`) on any host
+    // whose <body> is a flex or grid container. Its children are all
+    // position: fixed, so they are unaffected.
+    portalTarget.style.display = 'contents';
     document.body.appendChild(portalTarget);
 
     const handleEscape = (e: KeyboardEvent) => {

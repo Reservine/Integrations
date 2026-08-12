@@ -1,3 +1,4 @@
+import { onDestroy } from 'svelte';
 import { type Readable, derived, get, writable } from 'svelte/store';
 
 import { TRANSITIONS, VELOCITY_THRESHOLD } from './constants.js';
@@ -886,6 +887,19 @@ export function createVaul(props: CreateVaulProps) {
       });
     }
   }
+
+  // The host page has to be left exactly as we found it even when the widget is
+  // torn down while the drawer is still open - e.g. the embed swaps the drawer
+  // for the modal on a viewport resize, destroying this component mid-open, so
+  // closeDrawer() never runs. Without this, <html> keeps our scroll-behavior /
+  // overscroll-behavior overrides and <body> keeps position: fixed forever.
+  onDestroy(() => {
+    if (!isBrowser) return;
+    reset(document.documentElement, 'scrollBehavior');
+    reset(document.documentElement, 'overscrollBehavior');
+    scaleBackground(false);
+    restorePositionSetting();
+  });
 
   return {
     states: {
