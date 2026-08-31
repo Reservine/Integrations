@@ -1,0 +1,23 @@
+name: Verify SDK
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - run: bun install --frozen-lockfile
+      - run: bun run release:verify
+      - run: bun run --cwd infra check
+      - run: bun run --cwd infra test
+      - run: bun run --cwd infra cdk synth --quiet

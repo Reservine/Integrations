@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reservine SDK playground</title>
+    <style>
+      :root { color-scheme: dark; font-family: ui-sans-serif, system-ui, sans-serif; }
+      body { margin: 0; background: #101317; color: #f6f7f9; }
+      main { width: min(720px, calc(100% - 40px)); margin: 64px auto; }
+      section { margin-top: 32px; padding: 24px; border: 1px solid #2c333d; border-radius: 16px; background: #171b21; }
+      h1, h2 { margin-top: 0; }
+      p { color: #abb4c0; }
+      .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+      button { padding: 12px 18px; border: 0; border-radius: 10px; cursor: pointer; font: inherit; }
+      output { display: block; margin-top: 16px; color: #86efac; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Reservine SDK playground</h1>
+      <p>One Svelte custom element, exercised through the framework-neutral public contract.</p>
+
+      <section>
+        <h2>Generated trigger</h2>
+        <reservine-button
+          data-testid="generated-button"
+          partner="mytimegym"
+          text="Book a visit"
+          color="#ffffff"
+        ></reservine-button>
+      </section>
+
+      <section>
+        <h2>Custom trigger and controlled API</h2>
+        <div class="actions">
+          <reservine-button
+            data-testid="wrapped-button"
+            partner="mytimegym"
+            aswrapper="true"
+          >
+            <button type="button" data-testid="wrapped-trigger">Custom booking trigger</button>
+          </reservine-button>
+          <button type="button" data-testid="open-controlled">Open programmatically</button>
+          <button type="button" data-testid="close-controlled">Close programmatically</button>
+        </div>
+        <output data-testid="open-state">closed</output>
+      </section>
+    </main>
+
+    <script type="module">
+      import './src/browser.ts';
+
+      const element = document.querySelector('[data-testid="wrapped-button"]');
+      const state = document.querySelector('[data-testid="open-state"]');
+      document.querySelector('[data-testid="open-controlled"]').addEventListener('click', () => element.open());
+      document.querySelector('[data-testid="close-controlled"]').addEventListener('click', () => element.close());
+      element.addEventListener('reservine-open-change', (event) => {
+        state.value = event.detail.open ? 'open' : 'closed';
+      });
+    </script>
+  </body>
+</html>

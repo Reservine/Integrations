@@ -32,6 +32,9 @@ node_modules
 /.sass-cache
 /connect.lock
 /coverage
+/infra/cdk.out
+/packages/sdk/playwright-report
+/packages/sdk/test-results
 /libpeerconnection.log
 npm-debug.log
 yarn-error.log
