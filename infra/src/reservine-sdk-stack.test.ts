@@ -39,6 +39,22 @@ describe('Reservine SDK infrastructure', () => {
         HttpVersion: 'http2and3'
       })
     });
+    template.hasResourceProperties('AWS::CloudFront::ResponseHeadersPolicy', {
+      ResponseHeadersPolicyConfig: Match.objectLike({
+        CustomHeadersConfig: {
+          Items: [
+            {
+              Header: 'Cross-Origin-Resource-Policy',
+              Override: true,
+              Value: 'cross-origin'
+            }
+          ]
+        },
+        SecurityHeadersConfig: Match.objectLike({
+          ContentTypeOptions: { Override: true }
+        })
+      })
+    });
   });
 
   it('scopes the optional release role to the protected GitHub environment', () => {

@@ -48,8 +48,7 @@ export class ReservineSdkStack extends Stack {
       },
       customHeadersBehavior: {
         customHeaders: [
-          { header: 'Cross-Origin-Resource-Policy', value: 'cross-origin', override: true },
-          { header: 'X-Content-Type-Options', value: 'nosniff', override: true }
+          { header: 'Cross-Origin-Resource-Policy', value: 'cross-origin', override: true }
         ]
       },
       securityHeadersBehavior: {
