@@ -81,10 +81,22 @@ test.describe('Reservine SDK playground', () => {
     await expect(openControl).toBeFocused();
   });
 
-  test.fixme('reliably attaches the booking iframe for controlled desktop open', async ({ page }, testInfo) => {
+  test('reliably attaches the booking iframe for controlled desktop open', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop-modal journey');
 
-    await page.getByTestId('open-controlled').click();
+    await page.goto('about:blank');
+    await page.addScriptTag({ path: 'packages/sdk/dist/cdn/sdk.js' });
+    await page.evaluate(() => {
+      const element = document.createElement('reservine-button');
+      element.dataset.testid = 'built-controlled-button';
+      element.setAttribute('partner', 'mytimegym');
+      document.body.appendChild(element);
+    });
+    const button = page.getByTestId('built-controlled-button');
+    await expect.poll(() => button.evaluate((element) => typeof (element as { open?: unknown }).open)).toBe('function');
+    await button.evaluate((element) => (element as HTMLElement & { open: () => void }).open());
+
+    await expect(page.getByRole('dialog', { name: 'Reservine booking' })).toBeVisible();
     await expect(page.locator('iframe[title="Reservine"]')).toHaveAttribute(
       'src',
       /^https:\/\/mytimegym\.reservine\.me\//

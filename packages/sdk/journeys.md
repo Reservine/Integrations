@@ -12,7 +12,7 @@ entry: `/`
 4. inspect iframe URL → tenant is `mytimegym.reservine.me`
 
 testid-gaps: none
-finding: controlled desktop `open()` intermittently renders the dialog without attaching its booking iframe; focused E2E case is `fixme`
+verification: controlled desktop iframe regression passed 5/5 repetitions against built `dist/cdn/sdk.js`
 backend-silent: cross-origin booking application has no host-side verification hook
 verified: client-only · spec: `e2e/reservine-sdk.spec.ts`
 
