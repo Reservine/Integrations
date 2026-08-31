@@ -1,0 +1,15 @@
+{
+  "boot": "bun run dev",
+  "baseUrl": "http://127.0.0.1:21900",
+  "apiVerify": {},
+  "stacks": {
+    "web": {
+      "driver": "playwright",
+      "rootDir": "packages/sdk",
+      "specDir": "packages/sdk/e2e",
+      "runner": "bunx playwright test",
+      "fixtureImport": "@playwright/test"
+    }
+  },
+  "concurrency": { "web": 2 }
+}

@@ -1,0 +1,67 @@
+{
+  "name": "@reservine/sdk",
+  "version": "1.0.0",
+  "description": "Typed Reservine booking SDK for the web and popular UI frameworks",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Reservine/Integrations.git",
+    "directory": "packages/sdk"
+  },
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": true,
+  "files": ["dist", "README.md"],
+  "exports": {
+    ".": { "types": "./dist/types/index.d.ts", "import": "./dist/index.js" },
+    "./react": { "types": "./dist/types/adapters/react.d.ts", "import": "./dist/react.js" },
+    "./vue": { "types": "./dist/types/adapters/vue.d.ts", "import": "./dist/vue.js" },
+    "./svelte": { "types": "./dist/types/adapters/svelte.d.ts", "svelte": "./dist/svelte.js", "import": "./dist/svelte.js" },
+    "./angular": { "types": "./dist/types/adapters/angular.d.ts", "import": "./dist/angular.js" },
+    "./browser": { "types": "./dist/types/browser.d.ts", "import": "./dist/browser.js" },
+    "./package.json": "./package.json"
+  },
+  "peerDependencies": {
+    "@angular/core": ">=19 <22",
+    "react": ">=18 <20",
+    "svelte": ">=4 <6",
+    "vue": ">=3 <4"
+  },
+  "peerDependenciesMeta": {
+    "@angular/core": { "optional": true },
+    "react": { "optional": true },
+    "svelte": { "optional": true },
+    "vue": { "optional": true }
+  },
+  "scripts": {
+    "dev": "vite --port 3333",
+    "e2e": "playwright test",
+    "build": "bun run clean && vite build && vite build --config vite.cdn.config.ts && tsc --project tsconfig.build.json && bun scripts/copy-svelte-types.ts && bun scripts/build-compat-package.ts",
+    "check": "svelte-check --tsconfig ./tsconfig.json && tsc --project tsconfig.json --noEmit",
+    "clean": "bun -e \"import { rm } from 'node:fs/promises'; await rm('dist', { recursive: true, force: true })\"",
+    "test": "vitest run",
+    "test:packages": "bun scripts/verify-package.ts && publint && bun scripts/check-packed-types.ts"
+  },
+  "dependencies": { "bits-ui": "0.16.0" },
+  "devDependencies": {
+    "@angular/core": "^21.0.0",
+    "@arethetypeswrong/cli": "^0.18.0",
+    "@playwright/test": "^1.55.0",
+    "@sveltejs/vite-plugin-svelte": "^3.1.2",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/vue": "^8.0.0",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "jsdom": "^26.0.0",
+    "publint": "^0.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "svelte": "^4.2.20",
+    "svelte-check": "^3.8.6",
+    "typescript": "^5.9.0",
+    "vite": "^5.4.0",
+    "vitest": "^2.1.0",
+    "vue": "^3.5.0"
+  },
+  "publishConfig": { "access": "public" }
+}

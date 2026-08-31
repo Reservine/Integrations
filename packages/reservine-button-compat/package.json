@@ -1,0 +1,9 @@
+{
+  "name": "reservine-button",
+  "version": "0.0.25",
+  "description": "Compatibility release. New integrations should use @reservine/sdk.",
+  "license": "MIT",
+  "main": "dist/reservine-button.umd.js",
+  "files": ["dist", "README.md"],
+  "publishConfig": { "access": "public" }
+}

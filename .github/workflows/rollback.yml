@@ -1,0 +1,53 @@
+name: Roll back SDK channel
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Immutable version to promote, for example 1.0.0
+        required: true
+        type: string
+      channel:
+        description: Compatible major channel
+        required: true
+        default: v1
+        type: choice
+        options: [v1]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    environment: sdk-production
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ vars.AWS_RELEASE_ROLE_ARN }}
+          aws-region: us-east-1
+      - name: Promote selected immutable release
+        env:
+          CHANNEL: ${{ inputs.channel }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Version must be an exact X.Y.Z release" >&2
+            exit 1
+          fi
+          aws s3 cp \
+            "s3://${{ vars.AWS_ARTIFACT_BUCKET }}/sdk/releases/$VERSION/sdk.js" \
+            "s3://${{ vars.AWS_ARTIFACT_BUCKET }}/sdk/$CHANNEL.js" \
+            --copy-props metadata-directive \
+            --content-type application/javascript \
+            --cache-control public,max-age=0,s-maxage=300,must-revalidate
+      - name: Purge and verify
+        env:
+          CHANNEL: ${{ inputs.channel }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ vars.AWS_DISTRIBUTION_ID }} --paths "/sdk/$CHANNEL.js"
+          curl --fail --retry 12 --retry-delay 10 --retry-all-errors "https://cdn.reservine.io/sdk/$CHANNEL.js" --output /tmp/reservine-rollback.js
+          aws s3 cp "s3://${{ vars.AWS_ARTIFACT_BUCKET }}/sdk/releases/$VERSION/sdk.js" /tmp/reservine-release.js
+          cmp /tmp/reservine-release.js /tmp/reservine-rollback.js
