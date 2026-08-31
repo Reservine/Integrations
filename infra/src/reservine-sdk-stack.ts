@@ -101,7 +101,12 @@ export class ReservineSdkStack extends Stack {
         maxSessionDuration: Duration.hours(1)
     });
 
-    bucket.grantReadWrite(releaseRole, 'sdk/*');
+    // Publishing never needs deletion. Exact releases additionally use S3's
+    // conditional PutObject (`If-None-Match: *`) so an existing version cannot
+    // be replaced by the release workflow; bucket versioning remains the final
+    // recovery layer for mutable channels.
+    bucket.grantPut(releaseRole, 'sdk/*');
+    bucket.grantRead(releaseRole, 'sdk/releases/*');
     releaseRole.addToPolicy(
       new iam.PolicyStatement({
         actions: ['cloudfront:CreateInvalidation', 'cloudfront:GetInvalidation'],

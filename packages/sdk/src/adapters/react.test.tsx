@@ -53,4 +53,13 @@ describe('React adapter', () => {
     ref.current?.close();
     expect(element.opened).toBe(false);
   });
+
+  it('reacts to declarative open state changes', () => {
+    const { container, rerender } = render(<ReservineButton partner="mytimegym" open={false} />);
+    const element = container.querySelector('reservine-button') as ReservineButtonElement;
+    expect(element.opened).toBe(false);
+
+    rerender(<ReservineButton partner="mytimegym" open />);
+    expect(element.opened).toBe(true);
+  });
 });

@@ -20,7 +20,7 @@ Reservine's booking button will become a production SDK with a single lean Svelt
 | 10 | Initial version | Publish `@reservine/sdk` as `1.0.0` and deprecate the old `reservine-button` package through a final compatibility release | Makes the new compatibility contract explicit while preserving a migration path |
 
 Rollout note (2026-08-31): production starts with the controlled `v1.js` browser channel. npm publication and trusted-publisher activation are deferred to a later phase; package source and adapters remain ready without being part of the current release workflow.
-| 11 | Framework window | Test current and previous practical majors: React 18/19, Vue 3, Svelte 4/5, and the supported modern Angular range | Covers normal production sites without turning the SDK into a legacy framework project |
+| 11 | Framework window | Before npm publishing is enabled, test current and previous practical majors: React 18/19, Vue 3, Svelte 4/5, and the supported modern Angular range | Covers normal production sites without turning the SDK into a legacy framework project; npm publishing was explicitly deferred from this CDN-first release |
 | 12 | Rollout | Canary on MyTimeGym, then migrate MyZoneGym, then update Reservine-generated snippets | Limits blast radius while validating React and plain external embedding on real sites |
 
 ## Assumptions

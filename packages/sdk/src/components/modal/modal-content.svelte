@@ -1,3 +1,19 @@
+<script context="module" lang="ts">
+  let bodyScrollLockCount = 0;
+  let originalBodyOverflow = '';
+
+  function lockBodyScroll(): void {
+    if (bodyScrollLockCount === 0) originalBodyOverflow = document.body.style.overflow;
+    bodyScrollLockCount += 1;
+    document.body.style.overflow = 'hidden';
+  }
+
+  function unlockBodyScroll(): void {
+    bodyScrollLockCount = Math.max(0, bodyScrollLockCount - 1);
+    if (bodyScrollLockCount === 0) document.body.style.overflow = originalBodyOverflow;
+  }
+</script>
+
 <script lang="ts">
   import { getContext, onMount, onDestroy } from 'svelte';
   import type { Writable } from 'svelte/store';
@@ -11,6 +27,7 @@
   let contentElement: HTMLDivElement;
   let closeButtonElement: HTMLButtonElement;
   let previouslyFocusedElement: HTMLElement | undefined;
+  let bodyScrollLocked = false;
 
   onMount(() => {
     // Create portal target outside shadow DOM
@@ -24,10 +41,18 @@
       }
     };
 
+    const handleFocusIn = (event: FocusEvent) => {
+      if ($open && contentElement?.isConnected && !contentElement.contains(event.target as Node)) {
+        closeButtonElement.focus();
+      }
+    };
+
     window.addEventListener('keydown', handleEscape);
+    document.addEventListener('focusin', handleFocusIn);
 
     return () => {
       window.removeEventListener('keydown', handleEscape);
+      document.removeEventListener('focusin', handleFocusIn);
       if (portalTarget && portalTarget.parentNode) {
         portalTarget.parentNode.removeChild(portalTarget);
       }
@@ -85,7 +110,10 @@
       if (isOpening) queueMicrotask(() => closeButtonElement.focus());
 
       // Prevent body scroll when modal is open
-      document.body.style.overflow = 'hidden';
+      if (!bodyScrollLocked) {
+        lockBodyScroll();
+        bodyScrollLocked = true;
+      }
     } else {
       // Clean up
       if (overlayElement && overlayElement.parentNode) {
@@ -97,7 +125,10 @@
       if (contentElement && contentElement.parentNode) {
         contentElement.parentNode.removeChild(contentElement);
       }
-      document.body.style.overflow = '';
+      if (bodyScrollLocked) {
+        unlockBodyScroll();
+        bodyScrollLocked = false;
+      }
       previouslyFocusedElement?.focus();
       previouslyFocusedElement = undefined;
     }
@@ -110,7 +141,7 @@
     if (closeButtonElement) {
       closeButtonElement.removeEventListener('click', close);
     }
-    document.body.style.overflow = '';
+    if (bodyScrollLocked) unlockBodyScroll();
   });
 
   export function getContentElement() {

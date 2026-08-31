@@ -2,16 +2,28 @@
 
 The official typed SDK for embedding Reservine booking experiences. A single lean Svelte custom element powers the browser integration and the React, Vue, Svelte, and Angular adapters.
 
+## Public API
+
+Every adapter exposes the same typed configuration. Use `partner` for the tenant slug, or `reservationUrl` for an absolute booking URL. `branch`, `service`, and `employee` preselect the booking target; `text`, `appearance`, `size`, `width`, `color`, and `borderRadius` control presentation; `showGallery` controls gallery visibility; and `open` controls the booking surface declaratively.
+
+React exposes typed `open()` and `close()` methods through its ref. Vue, Svelte, and Angular expose the same methods on their component instance. All adapters report changes through their native `openChange` callback/event.
+
 ## React
 
 ```tsx
-import { ReservineButton } from '@reservine/sdk/react';
+import { useRef } from 'react';
+import { ReservineButton, type ReservineButtonHandle } from '@reservine/sdk/react';
+
+const button = useRef<ReservineButtonHandle>(null);
 
 <ReservineButton
+  ref={button}
   partner="mytimegym"
   text="Book now"
   onOpenChange={(open) => console.log(open)}
 />;
+
+button.current?.open();
 ```
 
 ## Vue

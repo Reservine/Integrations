@@ -78,6 +78,12 @@ describe('Reservine SDK infrastructure', () => {
         ])
       }
     });
+
+    const policies = template.findResources('AWS::IAM::Policy');
+    const statements = Object.values(policies).flatMap((policy) =>
+      policy.Properties.PolicyDocument.Statement as Array<{ Action: string | string[] }>
+    );
+    expect(statements.flatMap(({ Action }) => Action)).not.toContain('s3:DeleteObject*');
   });
 
   it('creates the GitHub provider when the account does not already have one', () => {

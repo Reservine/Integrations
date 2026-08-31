@@ -1,6 +1,7 @@
 import {
   AfterViewInit,
   Component,
+  CUSTOM_ELEMENTS_SCHEMA,
   ElementRef,
   EventEmitter,
   Input,
@@ -12,18 +13,19 @@ import {
 } from '@angular/core';
 
 import type { ReservineButtonElement, ReservineButtonProps, ReservineOpenChangeDetail } from '../contract.js';
-import { RESERVINE_BUTTON_TAG, RESERVINE_OPEN_CHANGE_EVENT } from '../contract.js';
+import { RESERVINE_OPEN_CHANGE_EVENT } from '../contract.js';
 import { applyReservinePropsWhenReady, defineReservineElements, setReservineOpen } from '../element.js';
 
 @Component({
   selector: 'reservine-booking-button',
   standalone: true,
-  template: '<span #mount><ng-content></ng-content></span>'
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  template: '<reservine-button #element><ng-content></ng-content></reservine-button>'
 })
 export class ReservineButtonComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() config: ReservineButtonProps = {};
   @Output() readonly openChange = new EventEmitter<boolean>();
-  @ViewChild('mount', { static: true }) private mount!: ElementRef<HTMLSpanElement>;
+  @ViewChild('element', { static: true }) private elementRef!: ElementRef<ReservineButtonElement>;
 
   private element?: ReservineButtonElement;
   private readonly handleOpenChange = (event: Event): void => {
@@ -31,13 +33,10 @@ export class ReservineButtonComponent implements AfterViewInit, OnChanges, OnDes
   };
 
   ngAfterViewInit(): void {
+    if (typeof window === 'undefined' || typeof customElements === 'undefined') return;
     void defineReservineElements();
-    this.element = document.createElement(RESERVINE_BUTTON_TAG) as ReservineButtonElement;
+    this.element = this.elementRef.nativeElement;
     this.element.addEventListener(RESERVINE_OPEN_CHANGE_EVENT, this.handleOpenChange);
-    while (this.mount.nativeElement.firstChild) {
-      this.element.append(this.mount.nativeElement.firstChild);
-    }
-    this.mount.nativeElement.append(this.element);
     void applyReservinePropsWhenReady(this.element, this.config);
   }
 

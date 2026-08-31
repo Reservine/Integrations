@@ -1,7 +1,8 @@
 import { render } from '@testing-library/vue';
+import { defineComponent, h, nextTick, ref } from 'vue';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { ReservineButtonElement } from '../contract';
+import type { ReservineButtonElement, ReservineButtonHandle } from '../contract';
 import { RESERVINE_OPEN_CHANGE_EVENT } from '../contract';
 
 class TestReservineButton extends HTMLElement {
@@ -42,5 +43,24 @@ describe('Vue adapter', () => {
       new CustomEvent(RESERVINE_OPEN_CHANGE_EVENT, { detail: { open: true } })
     );
     expect(onOpenChange).toHaveBeenCalledWith(true);
+  });
+
+  it('supports imperative and declarative open controls', async () => {
+    const handle = ref<ReservineButtonHandle>();
+    const config = ref({ partner: 'mytimegym', open: false });
+    const Host = defineComponent(() => () =>
+      h(ReservineButton, { ref: handle, config: config.value })
+    );
+    const { container } = render(Host);
+    await nextTick();
+    const element = container.querySelector('reservine-button') as ReservineButtonElement;
+    handle.value?.open();
+    expect(element.opened).toBe(true);
+    handle.value?.close();
+    expect(element.opened).toBe(false);
+
+    config.value = { partner: 'mytimegym', open: true };
+    await nextTick();
+    expect(element.opened).toBe(true);
   });
 });
