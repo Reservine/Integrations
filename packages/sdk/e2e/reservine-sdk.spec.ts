@@ -85,7 +85,7 @@ test.describe('Reservine SDK playground', () => {
     test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop-modal journey');
 
     await page.goto('about:blank');
-    await page.addScriptTag({ path: 'packages/sdk/dist/cdn/sdk.js' });
+    await page.addScriptTag({ path: 'dist/cdn/sdk.js' });
     await page.evaluate(() => {
       const element = document.createElement('reservine-button');
       element.dataset.testid = 'built-controlled-button';
