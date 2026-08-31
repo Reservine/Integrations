@@ -28,16 +28,26 @@ jobs:
           role-to-assume: ${{ vars.AWS_RELEASE_ROLE_ARN }}
           aws-region: us-east-1
       - name: Promote selected immutable release
-        run: >-
-          aws s3 cp
-          s3://${{ vars.AWS_ARTIFACT_BUCKET }}/sdk/releases/${{ inputs.version }}/sdk.js
-          s3://${{ vars.AWS_ARTIFACT_BUCKET }}/sdk/${{ inputs.channel }}.js
-          --copy-props metadata-directive
-          --content-type application/javascript
-          --cache-control no-cache,max-age=300
-      - name: Purge and verify
+        env:
+          CHANNEL: ${{ inputs.channel }}
+          VERSION: ${{ inputs.version }}
         run: |
-          aws cloudfront create-invalidation --distribution-id ${{ vars.AWS_DISTRIBUTION_ID }} --paths /sdk/${{ inputs.channel }}.js
-          curl --fail --retry 12 --retry-delay 10 --retry-all-errors https://cdn.reservine.io/sdk/${{ inputs.channel }}.js --output /tmp/reservine-rollback.js
-          aws s3 cp s3://${{ vars.AWS_ARTIFACT_BUCKET }}/sdk/releases/${{ inputs.version }}/sdk.js /tmp/reservine-release.js
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Version must be an exact X.Y.Z release" >&2
+            exit 1
+          fi
+          aws s3 cp \
+            "s3://${{ vars.AWS_ARTIFACT_BUCKET }}/sdk/releases/$VERSION/sdk.js" \
+            "s3://${{ vars.AWS_ARTIFACT_BUCKET }}/sdk/$CHANNEL.js" \
+            --copy-props metadata-directive \
+            --content-type application/javascript \
+            --cache-control public,max-age=0,s-maxage=300,must-revalidate
+      - name: Purge and verify
+        env:
+          CHANNEL: ${{ inputs.channel }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ vars.AWS_DISTRIBUTION_ID }} --paths "/sdk/$CHANNEL.js"
+          curl --fail --retry 12 --retry-delay 10 --retry-all-errors "https://cdn.reservine.io/sdk/$CHANNEL.js" --output /tmp/reservine-rollback.js
+          aws s3 cp "s3://${{ vars.AWS_ARTIFACT_BUCKET }}/sdk/releases/$VERSION/sdk.js" /tmp/reservine-release.js
           cmp /tmp/reservine-release.js /tmp/reservine-rollback.js

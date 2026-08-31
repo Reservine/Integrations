@@ -1,10 +1,15 @@
 import { defineComponent, h, onBeforeUnmount, onMounted, ref, watchEffect, type PropType } from 'vue';
 
-import type { ReservineButtonElement, ReservineButtonProps, ReservineOpenChangeDetail } from '../contract.js';
+import type {
+  ReservineButtonElement,
+  ReservineButtonHandle,
+  ReservineButtonProps,
+  ReservineOpenChangeDetail
+} from '../contract.js';
 import { RESERVINE_BUTTON_TAG, RESERVINE_OPEN_CHANGE_EVENT } from '../contract.js';
-import { applyReservineProps, defineReservineElements, setReservineOpen } from '../element.js';
+import { applyReservinePropsWhenReady, defineReservineElements, setReservineOpen } from '../element.js';
 
-export const ReservineButton = defineComponent({
+const ReservineButtonDefinition = defineComponent({
   name: 'ReservineButton',
   inheritAttrs: false,
   props: {
@@ -32,7 +37,7 @@ export const ReservineButton = defineComponent({
     });
 
     watchEffect(() => {
-      if (element.value) applyReservineProps(element.value, props.config);
+      if (element.value) void applyReservinePropsWhenReady(element.value, props.config);
     });
 
     expose({
@@ -51,3 +56,7 @@ export const ReservineButton = defineComponent({
     };
   }
 });
+
+export const ReservineButton = ReservineButtonDefinition as typeof ReservineButtonDefinition & {
+  new (): InstanceType<typeof ReservineButtonDefinition> & ReservineButtonHandle;
+};

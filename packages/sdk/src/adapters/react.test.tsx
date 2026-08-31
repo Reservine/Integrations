@@ -5,6 +5,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ReservineButtonElement, ReservineButtonHandle } from '../contract';
 import { RESERVINE_OPEN_CHANGE_EVENT } from '../contract';
 
+class TestReservineButton extends HTMLElement {
+  opened = false;
+  open(): void { this.opened = true; }
+  close(): void { this.opened = false; }
+}
+
+if (!customElements.get('reservine-button')) {
+  customElements.define('reservine-button', TestReservineButton);
+}
+
 vi.mock('../element', async (importOriginal) => {
   const original = await importOriginal<typeof import('../element')>();
   return { ...original, defineReservineElements: vi.fn(() => Promise.resolve()) };

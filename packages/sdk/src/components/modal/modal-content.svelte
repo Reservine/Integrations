@@ -4,6 +4,8 @@
 
   const { open, close } = getContext<{ open: Writable<boolean>; close: () => void }>('modal');
 
+  export let onContentReady: ((element: Element) => void) | undefined = undefined;
+
   let portalTarget: HTMLElement;
   let overlayElement: HTMLDivElement;
   let contentElement: HTMLDivElement;
@@ -78,6 +80,8 @@
 
       portalTarget.appendChild(overlayElement);
       portalTarget.appendChild(contentElement);
+      const slotContent = contentElement.querySelector('.r-modal-slot-content');
+      if (slotContent) onContentReady?.(slotContent);
       if (isOpening) queueMicrotask(() => closeButtonElement.focus());
 
       // Prevent body scroll when modal is open

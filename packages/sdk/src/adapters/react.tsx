@@ -42,7 +42,17 @@ export const ReservineButton = forwardRef<ReservineButtonHandle, ReservineButton
     useEffect(() => {
       const element = elementRef.current;
       if (!element) return;
-      applyReservineProps(element, props);
+      if (customElements.get(RESERVINE_BUTTON_TAG)) {
+        applyReservineProps(element, props);
+        return;
+      }
+      let active = true;
+      void defineReservineElements().then(() => {
+        if (active) applyReservineProps(element, props);
+      });
+      return () => {
+        active = false;
+      };
     }, [props]);
 
     useEffect(() => {

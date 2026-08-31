@@ -13,7 +13,7 @@ import {
 
 import type { ReservineButtonElement, ReservineButtonProps, ReservineOpenChangeDetail } from '../contract.js';
 import { RESERVINE_BUTTON_TAG, RESERVINE_OPEN_CHANGE_EVENT } from '../contract.js';
-import { applyReservineProps, defineReservineElements, setReservineOpen } from '../element.js';
+import { applyReservinePropsWhenReady, defineReservineElements, setReservineOpen } from '../element.js';
 
 @Component({
   selector: 'reservine-booking-button',
@@ -38,11 +38,11 @@ export class ReservineButtonComponent implements AfterViewInit, OnChanges, OnDes
       this.element.append(this.mount.nativeElement.firstChild);
     }
     this.mount.nativeElement.append(this.element);
-    applyReservineProps(this.element, this.config);
+    void applyReservinePropsWhenReady(this.element, this.config);
   }
 
   ngOnChanges(_changes: SimpleChanges): void {
-    if (this.element) applyReservineProps(this.element, this.config);
+    if (this.element) void applyReservinePropsWhenReady(this.element, this.config);
   }
 
   ngOnDestroy(): void {

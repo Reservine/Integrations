@@ -34,13 +34,16 @@ jobs:
           aws-region: us-east-1
       - name: Upload immutable release
         run: >-
-          aws s3 cp packages/sdk/dist/cdn/sdk.js
-          s3://${{ vars.AWS_ARTIFACT_BUCKET }}/sdk/releases/${{ steps.release.outputs.version }}/sdk.js
+          aws s3api put-object
+          --bucket ${{ vars.AWS_ARTIFACT_BUCKET }}
+          --key sdk/releases/${{ steps.release.outputs.version }}/sdk.js
+          --body packages/sdk/dist/cdn/sdk.js
           --content-type application/javascript
           --cache-control public,max-age=31536000,immutable
+          --if-none-match '*'
       - name: Publish and verify canary
         run: |
-          aws s3 cp packages/sdk/dist/cdn/sdk.js s3://${{ vars.AWS_ARTIFACT_BUCKET }}/sdk/canary.js --content-type application/javascript --cache-control no-cache,max-age=0
+          aws s3 cp packages/sdk/dist/cdn/sdk.js s3://${{ vars.AWS_ARTIFACT_BUCKET }}/sdk/canary.js --content-type application/javascript --cache-control no-store,max-age=0
           aws cloudfront create-invalidation --distribution-id ${{ vars.AWS_DISTRIBUTION_ID }} --paths /sdk/canary.js
           curl --fail --retry 12 --retry-delay 10 --retry-all-errors https://cdn.reservine.io/sdk/canary.js --output /tmp/reservine-canary.js
           cmp packages/sdk/dist/cdn/sdk.js /tmp/reservine-canary.js
@@ -55,7 +58,7 @@ jobs:
         working-directory: packages/sdk
       - name: Promote compatible channel
         run: |
-          aws s3 cp packages/sdk/dist/cdn/sdk.js s3://${{ vars.AWS_ARTIFACT_BUCKET }}/sdk/v${{ steps.release.outputs.major }}.js --content-type application/javascript --cache-control no-cache,max-age=300
+          aws s3 cp packages/sdk/dist/cdn/sdk.js s3://${{ vars.AWS_ARTIFACT_BUCKET }}/sdk/v${{ steps.release.outputs.major }}.js --content-type application/javascript --cache-control public,max-age=0,s-maxage=300,must-revalidate
           aws cloudfront create-invalidation --distribution-id ${{ vars.AWS_DISTRIBUTION_ID }} --paths /sdk/v${{ steps.release.outputs.major }}.js
       - name: Verify stable channel
         run: |

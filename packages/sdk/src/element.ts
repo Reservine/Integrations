@@ -27,8 +27,28 @@ export function applyReservineProps(
   }
 }
 
+export async function applyReservinePropsWhenReady(
+  element: ReservineButtonElement,
+  props: ReservineButtonProps
+): Promise<void> {
+  if (typeof customElements !== 'undefined' && customElements.get(RESERVINE_BUTTON_TAG)) {
+    applyReservineProps(element, props);
+    return;
+  }
+  await defineReservineElements();
+  applyReservineProps(element, props);
+}
+
 export function setReservineOpen(element: ReservineButtonElement | null, open: boolean): void {
   if (!element) return;
+  if (
+    element.isConnected &&
+    typeof customElements !== 'undefined' &&
+    !customElements.get(RESERVINE_BUTTON_TAG)
+  ) {
+    void defineReservineElements().then(() => setReservineOpen(element, open));
+    return;
+  }
   const method = open ? element.open : element.close;
   if (typeof method === 'function') method.call(element);
   else element.opened = open;

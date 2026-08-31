@@ -86,6 +86,22 @@
   let modalContentRef: { getContentElement(): Element | null } | undefined;
   let iframeElement: HTMLIFrameElement | undefined;
 
+  const mountModalIframe = (slotContent: Element): void => {
+    if (!iframeElement) {
+      iframeElement = document.createElement('iframe');
+      iframeElement.title = 'Reservine';
+      iframeElement.allow = 'payment';
+      iframeElement.style.cssText = 'width: 100%!important; height: 100%!important; border: none!important;background:black';
+
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'width: 100%!important; height: 100%!important;';
+      wrapper.appendChild(iframeElement);
+      slotContent.appendChild(wrapper);
+    }
+
+    iframeElement.src = $iframeSrc;
+  };
+
   const detectDevice = () => {
     const isDesktopSize = window.matchMedia('(min-width: 1024px)').matches;
     const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
@@ -97,22 +113,7 @@
   // Handle iframe rendering for modal (outside shadow DOM)
   $: if (useModal && modalContentRef && $openState) {
     const slotContent = modalContentRef.getContentElement();
-    if (slotContent && !iframeElement) {
-      iframeElement = document.createElement('iframe');
-      iframeElement.title = 'Reservine';
-      iframeElement.allow = 'payment';
-      iframeElement.style.cssText = 'width: 100%!important; height: 100%!important; border: none!important;background:black';
-
-      const wrapper = document.createElement('div');
-      wrapper.style.cssText = 'width: 100%!important; height: 100%!important;';
-      wrapper.appendChild(iframeElement);
-
-      slotContent.appendChild(wrapper);
-    }
-
-    if (iframeElement) {
-      iframeElement.src = $iframeSrc;
-    }
+    if (slotContent) mountModalIframe(slotContent);
   } else if (!$openState && iframeElement) {
     // Clean up iframe when modal closes
     if (iframeElement.parentNode) {
@@ -409,7 +410,7 @@
       {/if}
     </Modal.Trigger>
 
-    <Modal.Content bind:this={modalContentRef} />
+    <Modal.Content bind:this={modalContentRef} onContentReady={mountModalIframe} />
   </Modal.Root>
 {:else}
   <Drawer.Root bind:open={$openState} onOpenChange={handleOpenChange}>
