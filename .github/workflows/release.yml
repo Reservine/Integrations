@@ -17,11 +17,6 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.14
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          registry-url: https://registry.npmjs.org
-          package-manager-cache: false
       - run: bun install --frozen-lockfile
       - run: bun run release:verify
       - id: release
@@ -47,15 +42,6 @@ jobs:
           aws cloudfront create-invalidation --distribution-id ${{ vars.AWS_DISTRIBUTION_ID }} --paths /sdk/canary.js
           curl --fail --retry 12 --retry-delay 10 --retry-all-errors https://cdn.reservine.io/sdk/canary.js --output /tmp/reservine-canary.js
           cmp packages/sdk/dist/cdn/sdk.js /tmp/reservine-canary.js
-      - name: Publish npm packages with trusted publishing
-        run: |
-          bunx npm@11.6.2 publish --access public
-          if curl --silent --fail https://registry.npmjs.org/reservine-button/0.0.25 >/dev/null; then
-            echo "reservine-button@0.0.25 is already published; skipping the one-time compatibility release"
-          else
-            bunx npm@11.6.2 publish ../reservine-button-compat --access public
-          fi
-        working-directory: packages/sdk
       - name: Promote compatible channel
         run: |
           aws s3 cp packages/sdk/dist/cdn/sdk.js s3://${{ vars.AWS_ARTIFACT_BUCKET }}/sdk/v${{ steps.release.outputs.major }}.js --content-type application/javascript --cache-control public,max-age=0,s-maxage=300,must-revalidate

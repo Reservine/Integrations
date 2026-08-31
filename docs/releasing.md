@@ -11,17 +11,17 @@
    - `AWS_RELEASE_ROLE_ARN`
    - `AWS_ARTIFACT_BUCKET`
    - `AWS_DISTRIBUTION_ID`
-7. Bootstrap `@reservine/sdk@1.0.0` interactively if npm requires the first package creation, then configure npm trusted publishers for both `@reservine/sdk` and `reservine-button` against `.github/workflows/release.yml`.
+7. npm publishing is deliberately deferred. The package artifacts and framework adapters remain release-ready in the repository, but the production workflow currently publishes only the browser bundle.
 8. Deprecate the unscoped package after its `0.0.25` compatibility release, pointing new consumers to `@reservine/sdk`.
 
-No AWS or npm write token belongs in GitHub. GitHub obtains short-lived AWS credentials through OIDC; npm's trusted publisher accepts the workflow identity directly.
+No AWS write token belongs in GitHub. GitHub obtains short-lived AWS credentials through OIDC.
 
 ## Release
 
 1. Update the SDK version and changelog-compatible documentation.
 2. Merge a green PR.
 3. Create and push the matching `vX.Y.Z` tag.
-4. The protected workflow builds once, uploads the immutable release, verifies canary bytes, publishes npm packages, promotes the compatible major channel, invalidates only that channel path, and verifies the promoted bytes.
+4. The protected workflow builds once, uploads the immutable release, verifies canary bytes, promotes the compatible major channel, invalidates only that channel path, and verifies the promoted bytes.
 
 Immutable object:
 
