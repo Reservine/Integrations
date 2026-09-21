@@ -6,6 +6,9 @@ import { defineConfig } from 'vite';
 const frameworkPeers = ['@angular/core', 'react', 'react/jsx-runtime', 'svelte', 'vue'];
 
 export default defineConfig({
+  // vitest resolves `svelte` to its SSR entry (where onMount is a no-op) unless the
+  // browser condition is on; the jsdom suites mount real custom elements.
+  resolve: process.env.VITEST ? { conditions: ['browser'] } : undefined,
   plugins: [
     svelte({ preprocess: vitePreprocess(), exclude: '**/*.component.svelte' }),
     svelte({
