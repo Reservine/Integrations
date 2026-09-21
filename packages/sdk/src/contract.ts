@@ -163,7 +163,14 @@ export interface ReservineMembershipsElement extends HTMLElement {
 
 /** The widget DTO served by `GET {apiUrl}/api/widget/{partner}/memberships`. */
 export interface ReservineMembershipsData {
-  tenant: { slug: string; name: string; locale: string; currency: string };
+  tenant: {
+    slug: string;
+    name: string;
+    locale: string;
+    currency: string;
+    /** Public https origin of the tenant app the checkout iframe loads; slug-derived when absent. */
+    url?: string | null;
+  };
   theme: { light: Record<string, string>; dark: Record<string, string> } | null;
   branches: { id: number; name: string }[];
   plans: ReservineMembershipPlan[];

@@ -191,10 +191,23 @@
 
   // --- purchase shell -------------------------------------------------------
 
+  /** The tenant app origin: the DTO's public url when present, else the slug-derived host. */
+  const tenantOrigin = (): string => {
+    const configured = data?.tenant.url?.trim();
+    if (configured) {
+      try {
+        return new URL(configured).origin;
+      } catch {
+        // fall through to the slug-derived host
+      }
+    }
+    return `https://${partner}.reservine.me`;
+  };
+
   const buildUrl = (adjustedFontSize?: number): string => {
     if (!partner) return '';
     const planId = selectedPlanId ?? plan ?? visiblePlans[0]?.id ?? '';
-    const url = new URL(`https://${partner}.reservine.me/embed/memberships/${planId}`);
+    const url = new URL(`${tenantOrigin()}/embed/memberships/${planId}`);
     if (branch) url.searchParams.set(IntegrationConstants.branch, String(branch));
     url.searchParams.set(IntegrationConstants.reservineTheme, mode);
     if (primaryHex) url.searchParams.set(IntegrationConstants.reservinePrimary, primaryHex.slice(1));

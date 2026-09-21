@@ -230,6 +230,40 @@ describe('<reservine-memberships>', () => {
     expect(navigateTopWindow).toHaveBeenCalledWith('https://tenant.cz/thanks');
   });
 
+  it('loads the checkout from tenant.url when the DTO carries it and accepts purchases from that origin', async () => {
+    fetchMock.mockImplementation(() =>
+      Promise.resolve(
+        jsonResponse({
+          data: { ...DTO, tenant: { ...DTO.tenant, url: 'https://fitflow.reservine.devlp.lovinka.com/' } }
+        })
+      )
+    );
+    const element = await mountElement({ partner: 'fitflow' });
+    const detailSpy = vi.fn();
+    element.addEventListener(RESERVINE_MEMBERSHIP_PURCHASED_EVENT, (event) =>
+      detailSpy((event as CustomEvent).detail)
+    );
+
+    element.open(12);
+    await flush();
+
+    const src = iframeSrc();
+    expect(src.origin).toBe('https://fitflow.reservine.devlp.lovinka.com');
+    expect(src.pathname).toBe('/embed/memberships/12');
+
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        origin: 'https://fitflow.reservine.me',
+        data: { type: 'reservine-membership-purchased', orderId: 9, planId: 12 }
+      })
+    );
+    purchasedMessage(element, 10, 12);
+    await flush();
+
+    expect(detailSpy).toHaveBeenCalledTimes(1);
+    expect(detailSpy).toHaveBeenCalledWith({ orderId: 10, planId: 12 });
+  });
+
   it('ignores purchase messages from a foreign origin', async () => {
     const element = await mountElement({ partner: 'fitflow' });
     const detailSpy = vi.fn();
