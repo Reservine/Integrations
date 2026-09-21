@@ -28,7 +28,7 @@ export default defineConfig({
         react: resolve(__dirname, 'src/adapters/react.tsx'),
         vue: resolve(__dirname, 'src/adapters/vue.ts'),
         angular: resolve(__dirname, 'src/adapters/angular.ts'),
-        svelte: resolve(__dirname, 'src/adapters/ReservineButton.svelte')
+        svelte: resolve(__dirname, 'src/adapters/svelte.ts')
       },
       formats: ['es']
     },

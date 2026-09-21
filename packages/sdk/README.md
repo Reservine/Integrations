@@ -67,3 +67,111 @@ The compatible `v1` channel automatically receives non-breaking releases. Exact 
 <script defer src="https://cdn.reservine.io/sdk/v1.js"></script>
 <reservine-button partner="mytimegym" text="Book now"></reservine-button>
 ```
+
+## Memberships widget
+
+`<reservine-memberships>` renders the tenant's membership plans as cards inside your own page and opens the Reservine checkout (login, billing, Apple/Google Pay, saved cards, 3DS) when a visitor clicks Buy.
+
+**Prerequisite:** register your website's domain in Reservine › Settings › Tenant › Domains. The widget API only answers registered origins (unregistered ones get a `domain_not_registered` hint instead of cards), and the same registration enables Apple Pay on your domain.
+
+Configuration, shared by every adapter:
+
+| Prop | Meaning |
+| --- | --- |
+| `partner` | Tenant slug (required). |
+| `plan` | Render only this plan's card (a single-plan call to action). |
+| `branch` | Scope plans to a branch; omitted = default branch + tenant-wide plans. |
+| `locale` | `cs` or `en`; defaults to the page language, then the tenant locale. |
+| `theme` | `light`, `dark`, or `auto` (follows `prefers-color-scheme`). Cards inherit the tenant's Reservine palette by default. |
+| `primary`, `radius`, `font` | Host overrides: brand hex, corner radius, font family (`inherit` adopts the page font). Forwarded into the checkout. |
+| `successUrl` | After a successful purchase, close the checkout and navigate the top window here. Without it the success view stays open. |
+| `buyText` | Buy button label override. |
+| `apiUrl` | API origin override (defaults to the production API). |
+
+Every adapter emits `openChange` (checkout opened/closed) and `purchased` with `{ orderId, planId }`; the plain element dispatches the same as the DOM events `reservine-open-change` and `reservine-membership-purchased`. For fine-grained styling set `--reservine-*` custom properties on the element; they win over both the tenant palette and the props.
+
+### React
+
+```tsx
+import { useRef } from 'react';
+import { ReservineMemberships, type ReservineMembershipsHandle } from '@reservine/sdk/react';
+
+const memberships = useRef<ReservineMembershipsHandle>(null);
+
+<ReservineMemberships
+  ref={memberships}
+  partner="mytimegym"
+  plan={12}
+  theme="dark"
+  primary="#e11d48"
+  radius="16px"
+  font="inherit"
+  successUrl="https://example.com/thanks"
+  onPurchased={({ orderId, planId }) => console.log(orderId, planId)}
+/>;
+
+memberships.current?.open(12);
+```
+
+### Vue
+
+```vue
+<script setup lang="ts">
+import { ReservineMemberships } from '@reservine/sdk/vue';
+</script>
+
+<template>
+  <ReservineMemberships
+    :config="{ partner: 'mytimegym', branch: 3, theme: 'auto', successUrl: '/thanks' }"
+    @purchased="({ orderId, planId }) => track(orderId, planId)"
+  />
+</template>
+```
+
+### Svelte
+
+```svelte
+<script lang="ts">
+  import { ReservineMemberships } from '@reservine/sdk/svelte';
+</script>
+
+<ReservineMemberships
+  config={{ partner: 'mytimegym', plan: 12, primary: '#e11d48' }}
+  onPurchased={(detail) => console.log(detail)}
+/>
+```
+
+### Angular
+
+Import the standalone `ReservineMembershipsComponent`, then use:
+
+```html
+<reservine-membership-plans
+  [config]="{ partner: 'mytimegym', plan: 12, radius: '16px', successUrl: '/thanks' }"
+  (purchased)="handlePurchased($event)"
+></reservine-membership-plans>
+```
+
+### Plain HTML
+
+```html
+<script defer src="https://cdn.reservine.io/sdk/v1.js"></script>
+<reservine-memberships partner="mytimegym"></reservine-memberships>
+
+<reservine-memberships
+  partner="mytimegym"
+  plan="12"
+  theme="dark"
+  primary="#e11d48"
+  radius="16px"
+  font="inherit"
+  success-url="https://example.com/thanks"
+></reservine-memberships>
+
+<script>
+  document.querySelector('reservine-memberships')
+    .addEventListener('reservine-membership-purchased', (event) => {
+      console.log(event.detail.orderId, event.detail.planId);
+    });
+</script>
+```
