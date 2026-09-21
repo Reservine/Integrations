@@ -150,6 +150,7 @@ describe('<reservine-memberships>', () => {
     expect(src.pathname).toBe('/embed/memberships/12');
     expect(src.searchParams.get('branch')).toBe('3');
     expect(src.searchParams.get('reservine-theme')).toBe('light');
+    expect(src.searchParams.get('reservine-host')).toBe(window.location.origin);
   });
 
   it('maps tenant theme tokens to CSS variables and follows theme="dark"', async () => {

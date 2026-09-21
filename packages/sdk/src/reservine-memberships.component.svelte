@@ -198,6 +198,11 @@
     if (branch) url.searchParams.set(IntegrationConstants.branch, String(branch));
     url.searchParams.set(IntegrationConstants.reservineTheme, mode);
     if (primaryHex) url.searchParams.set(IntegrationConstants.reservinePrimary, primaryHex.slice(1));
+    // The embed page posts the purchase back to this origin when the host's
+    // Referrer-Policy strips document.referrer.
+    if (typeof window !== 'undefined') {
+      url.searchParams.set(IntegrationConstants.reservineHost, window.location.origin);
+    }
     if (adjustedFontSize) {
       url.searchParams.set(IntegrationConstants.adjustedFontSize, adjustedFontSize.toString());
     }

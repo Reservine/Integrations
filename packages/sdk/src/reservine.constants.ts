@@ -6,6 +6,7 @@ export const IntegrationConstants = {
   reservineNavigation: 'reservine-navigation',
   reservineMembershipPurchased: 'reservine-membership-purchased',
   reservinePrimary: 'reservine-primary',
+  reservineHost: 'reservine-host',
   reservineTheme: 'reservine-theme',
   branch: 'branch',
   service: 'service',
