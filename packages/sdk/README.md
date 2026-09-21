@@ -72,7 +72,7 @@ The compatible `v1` channel automatically receives non-breaking releases. Exact 
 
 `<reservine-memberships>` renders the tenant's membership plans as cards inside your own page and opens the Reservine checkout (login, billing, Apple/Google Pay, saved cards, 3DS) when a visitor clicks Buy.
 
-**Prerequisite:** register your website's domain in Reservine › Settings › Tenant › Domains. The widget API only answers registered origins (unregistered ones get a `domain_not_registered` hint instead of cards), and the same registration enables Apple Pay on your domain.
+**Prerequisite:** register your website's domain in Reservine › Settings › Public profile › Domains. The widget API only answers registered origins (unregistered ones get a `domain_not_registered` hint instead of cards), and the same registration enables Apple Pay on your domain.
 
 Configuration, shared by every adapter:
 
