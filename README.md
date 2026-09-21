@@ -4,12 +4,12 @@ This repository owns the public `@reservine/sdk` package, its framework adapters
 
 ## Architecture
 
-- `packages/sdk` — framework-neutral contract, Svelte custom element, and React/Vue/Svelte/Angular adapters
+- `packages/sdk` — framework-neutral contract, the Svelte custom elements (`reservine-button`, `reservine-memberships`) and React/Vue/Svelte/Angular adapters
 - `packages/reservine-button-compat` — final compatibility release for existing `reservine-button` consumers
 - `infra` — AWS CDK stack for private S3 storage, CloudFront, TLS, and GitHub release identity
 - `.github/workflows` — verification, atomic release promotion, and rollback
 
-The Svelte custom element is the only booking UI implementation. Framework adapters map their native property, event, and ref conventions onto that element.
+`packages/sdk/src/purchase-shell.svelte` is the single modal/drawer/iframe implementation; `reservine-button.component.svelte` and `reservine-memberships.component.svelte` are the only two UI elements built on it. Framework adapters map their native property, event, and ref conventions onto those elements and stay thin.
 
 ## Development
 

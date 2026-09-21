@@ -264,6 +264,49 @@ describe('<reservine-memberships>', () => {
     expect(detailSpy).toHaveBeenCalledWith({ orderId: 10, planId: 12 });
   });
 
+  it('drops same-origin messages with a foreign or missing type or a malformed payload', async () => {
+    const element = await mountElement({ partner: 'fitflow', 'success-url': 'https://tenant.cz/thanks' });
+    const detailSpy = vi.fn();
+    element.addEventListener(RESERVINE_MEMBERSHIP_PURCHASED_EVENT, detailSpy);
+    element.open(12);
+    await flush();
+    const origin = iframeSrc().origin;
+
+    const rejected: unknown[] = [
+      { orderId: 1, planId: 12 },
+      { type: 'membership-purchased', orderId: 1, planId: 12 },
+      { type: 'stripe-purchased', orderId: 1, planId: 12 },
+      { type: 'reservine-membership-purchased', orderId: 'abc', planId: 12 },
+      { type: 'reservine-membership-purchased', orderId: 1 },
+      { type: 'reservine-membership-purchased', orderId: Infinity, planId: 12 },
+      { type: 'reservine-unknown', orderId: 1, planId: 12 },
+      ['reservine-membership-purchased'],
+      'reservine-membership-purchased',
+      null
+    ];
+    for (const data of rejected) {
+      window.dispatchEvent(new MessageEvent('message', { origin, data }));
+    }
+    await flush();
+
+    expect(detailSpy).not.toHaveBeenCalled();
+    expect(element.opened).toBe(true);
+    expect(navigateTopWindow).not.toHaveBeenCalled();
+  });
+
+  it('gives every Buy button a distinct accessible name carrying the plan name', async () => {
+    const element = await mountElement({ partner: 'fitflow', locale: 'en' });
+    const names = [...shadow(element).querySelectorAll<HTMLButtonElement>('.rm-buy')].map((button) =>
+      button.getAttribute('aria-label')
+    );
+
+    expect(names).toEqual(['Buy – Pro', 'Buy – 10 vstupů']);
+    expect(new Set(names).size).toBe(names.length);
+
+    const custom = await mountElement({ partner: 'fitflow', 'buy-text': 'Join now', plan: '12' });
+    expect(shadow(custom).querySelector('.rm-buy')?.getAttribute('aria-label')).toBe('Join now – Pro');
+  });
+
   it('ignores purchase messages from a foreign origin', async () => {
     const element = await mountElement({ partner: 'fitflow' });
     const detailSpy = vi.fn();
@@ -316,7 +359,7 @@ describe('<reservine-memberships>', () => {
 
     const hint = shadow(element).querySelector('[data-reservine-state="domain-not-registered"]');
     expect(hint?.textContent).toContain('FitFlow Studios');
-    expect(hint?.textContent).toContain('Settings › Tenant › Domains');
+    expect(hint?.textContent).toContain('Settings › Public profile › Domains');
     expect(shadow(element).querySelectorAll('.rm-card')).toHaveLength(0);
   });
 });

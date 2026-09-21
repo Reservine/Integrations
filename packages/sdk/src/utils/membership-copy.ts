@@ -40,7 +40,7 @@ const COPY: Record<MembershipLocale, MembershipCopy> = {
     planNotFound: 'Tento plán není k dispozici.',
     noPlans: 'Žádné plány k zakoupení.',
     domainNotRegistered: (tenant) =>
-      `Tato doména není registrována pro ${tenant} v Reservine › Nastavení › Firma › Domény.`,
+      `Tato doména není registrována pro ${tenant} v Reservine › Nastavení › Veřejný profil › Domény.`,
     loadFailed: 'Plány se nepodařilo načíst.',
     retry: 'Zkusit znovu'
   },
@@ -58,7 +58,7 @@ const COPY: Record<MembershipLocale, MembershipCopy> = {
     planNotFound: 'This plan is not available.',
     noPlans: 'No plans available for purchase.',
     domainNotRegistered: (tenant) =>
-      `This domain is not registered for ${tenant} in Reservine › Settings › Tenant › Domains.`,
+      `This domain is not registered for ${tenant} in Reservine › Settings › Public profile › Domains.`,
     loadFailed: 'Plans could not be loaded.',
     retry: 'Retry'
   }

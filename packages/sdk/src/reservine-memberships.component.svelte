@@ -498,7 +498,13 @@
               <span class="rm-amount">{formatMembershipPrice(resolvedLocale, item.price, item.currency_code)}</span>
               <span class="rm-suffix">{priceSuffix(item)}</span>
             </p>
-            <button type="button" class="rm-buy" data-plan-buy={item.id} on:click={() => open(item.id)}>
+            <button
+              type="button"
+              class="rm-buy"
+              data-plan-buy={item.id}
+              aria-label="{buyText || copy.buy} – {item.name}"
+              on:click={() => open(item.id)}
+            >
               {buyText || copy.buy}
             </button>
           </div>

@@ -95,31 +95,64 @@
   iframeSrc.set(buildUrl());
 
   const handleMessage = (event: MessageEvent<unknown>) => {
-    if (typeof event.data !== 'object' || event.data === null) return;
-
     const origin = currentOrigin();
     if (!origin || event.origin !== origin) return;
 
-    if (isReservineNavigationMessage(event.data)) {
-      const nextUrl = new URL(event.data.route, origin);
+    const message = parseReservineMessage(event.data);
+    if (!message) return;
+
+    if (message.type === IntegrationConstants.reservineNavigation) {
+      const nextUrl = new URL(message.route, origin);
       if (nextUrl.origin === origin) {
         pendingIframeSrc.set(nextUrl.toString());
       }
       return;
     }
 
-    onMessage?.(event.data);
+    onMessage?.(message);
   };
 
-  const isReservineNavigationMessage = (
-    value: unknown
-  ): value is { type: typeof IntegrationConstants.reservineNavigation; route: string } =>
-    typeof value === 'object' &&
-    value !== null &&
-    'type' in value &&
-    value.type === IntegrationConstants.reservineNavigation &&
-    'route' in value &&
-    typeof value.route === 'string';
+  type ReservineNavigationMessage = {
+    type: typeof IntegrationConstants.reservineNavigation;
+    route: string;
+  };
+  type ReservineMembershipPurchasedMessage = {
+    type: typeof IntegrationConstants.reservineMembershipPurchased;
+    orderId: number;
+    planId: number;
+  };
+  type ReservineMessage = ReservineNavigationMessage | ReservineMembershipPurchasedMessage;
+
+  const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+    typeof value === 'object' && value !== null && !Array.isArray(value);
+
+  const finiteNumber = (value: unknown): number | null => {
+    const number = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
+    return Number.isFinite(number) ? number : null;
+  };
+
+  /**
+   * Only messages the Reservine app is known to post get through: a plain object
+   * with a `reservine-` typed name whose payload matches that type's schema.
+   * Unknown types and malformed payloads are dropped before `onMessage`.
+   */
+  const parseReservineMessage = (value: unknown): ReservineMessage | null => {
+    if (!isPlainObject(value)) return null;
+    const type = value.type;
+    if (typeof type !== 'string' || !type.startsWith('reservine-')) return null;
+
+    if (type === IntegrationConstants.reservineNavigation) {
+      return typeof value.route === 'string' ? { type, route: value.route } : null;
+    }
+
+    if (type === IntegrationConstants.reservineMembershipPurchased) {
+      const orderId = finiteNumber(value.orderId);
+      const planId = finiteNumber(value.planId);
+      return orderId !== null && planId !== null ? { type, orderId, planId } : null;
+    }
+
+    return null;
+  };
 
   onMount(() => {
     injectMainStyles();
