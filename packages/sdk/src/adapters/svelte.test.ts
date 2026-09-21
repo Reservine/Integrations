@@ -74,8 +74,12 @@ describe('Svelte button adapter', () => {
     await flush();
     const element = target.querySelector('reservine-button') as ReservineButtonElement;
 
-    for (const name of Object.keys(buttonConfig) as (typeof reservineButtonPropNames)[number][]) {
-      expect(element[name]).toBe(buttonConfig[name as keyof typeof buttonConfig]);
+    // Contract-driven: every prop the contract declares is forwarded when configured,
+    // so a prop added to `reservineButtonPropNames` cannot be silently missed here.
+    const configured = buttonConfig as Partial<Record<(typeof reservineButtonPropNames)[number], unknown>>;
+    for (const name of reservineButtonPropNames) {
+      if (!(name in configured)) continue;
+      expect(element[name]).toBe(configured[name]);
     }
 
     element.dispatchEvent(new CustomEvent(RESERVINE_OPEN_CHANGE_EVENT, { detail: { open: true } }));

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type {
   ReservineButtonElement,
+  ReservineMembershipPurchasedDetail,
   ReservineMembershipsElement
 } from '../contract';
 import {
@@ -85,7 +86,7 @@ describe('Angular button adapter', () => {
     };
     component.config = { partner: 'mytimegym', text: 'Book now', branch: 42 };
     const emitted: boolean[] = [];
-    component.openChange.subscribe((open) => emitted.push(open));
+    component.openChange.subscribe((open: boolean) => emitted.push(open));
     component.ngAfterViewInit();
     await flush();
 
@@ -107,9 +108,9 @@ describe('Angular memberships adapter', () => {
   it('forwards every contract prop and emits both outputs with their detail', async () => {
     const { component, element } = mountMemberships(membershipsConfig);
     const opens: boolean[] = [];
-    const purchases: unknown[] = [];
-    component.openChange.subscribe((open) => opens.push(open));
-    component.purchased.subscribe((detail) => purchases.push(detail));
+    const purchases: ReservineMembershipPurchasedDetail[] = [];
+    component.openChange.subscribe((open: boolean) => opens.push(open));
+    component.purchased.subscribe((detail: ReservineMembershipPurchasedDetail) => purchases.push(detail));
     await flush();
 
     for (const name of reservineMembershipsPropNames) {
@@ -151,8 +152,8 @@ describe('Angular memberships adapter', () => {
     await flush();
     expect(element.opened).toBe(true);
 
-    const purchases: unknown[] = [];
-    component.purchased.subscribe((detail) => purchases.push(detail));
+    const purchases: ReservineMembershipPurchasedDetail[] = [];
+    component.purchased.subscribe((detail: ReservineMembershipPurchasedDetail) => purchases.push(detail));
     component.ngOnDestroy();
     element.dispatchEvent(
       new CustomEvent(RESERVINE_MEMBERSHIP_PURCHASED_EVENT, { detail: { orderId: 1, planId: 2 } })
