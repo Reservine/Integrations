@@ -1,14 +1,10 @@
 <svelte:options customElement="reservine-button" immutable={true} />
 
 <script lang="ts">
-  import * as Drawer from './components/drawer';
-  import * as Modal from './components/modal';
-  import { writable } from 'svelte/store';
-  import { createEventDispatcher, onMount } from 'svelte';
+  import { createEventDispatcher } from 'svelte';
 
-  import { reservineButtonStyles } from './reservine-button.constants';
-  import { getAdjustedFontSize } from './utils/reservine-integration.utils';
-  import { IntegrationConstants, ResConsole } from './reservine.constants';
+  import PurchaseShell from './purchase-shell.svelte';
+  import { IntegrationConstants } from './reservine.constants';
 
   // Has to be same as ShareButtonSize in share-button-code.component.ts
   enum ButtonSize {
@@ -67,60 +63,19 @@
 
   branch = branch || branchId; // For backwards compatibility :(  Only MyTime and YourFitness
 
-  const openState = writable(opened);
-  const iframeSrc = writable('');
-  const pendingIframeSrc = writable('');
-
-  $: openState.set(opened);
+  let shell: PurchaseShell | undefined;
 
   export function open(): void {
-    handleOpenChange(true);
+    shell?.open();
   }
 
   export function close(): void {
-    handleOpenChange(false);
+    shell?.close();
   }
 
-  // Device detection: use modal on desktop (non-touch or >= 1024px), drawer on mobile/touch
-  let useModal = false;
-  let modalContentRef: { getContentElement(): Element | null } | undefined;
-  let iframeElement: HTMLIFrameElement | undefined;
-
-  const mountModalIframe = (slotContent: Element): void => {
-    if (!iframeElement) {
-      iframeElement = document.createElement('iframe');
-      iframeElement.title = 'Reservine';
-      iframeElement.allow = 'payment';
-      iframeElement.style.cssText = 'width: 100%!important; height: 100%!important; border: none!important;background:black';
-
-      const wrapper = document.createElement('div');
-      wrapper.style.cssText = 'width: 100%!important; height: 100%!important;';
-      wrapper.appendChild(iframeElement);
-      slotContent.appendChild(wrapper);
-    }
-
-    iframeElement.src = $iframeSrc;
+  const handleOpenChange = (isOpen: boolean) => {
+    dispatch('reservine-open-change', { open: isOpen });
   };
-
-  const detectDevice = () => {
-    const isDesktopSize = window.matchMedia('(min-width: 1024px)').matches;
-    const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
-
-    // Use modal if desktop size and NOT a touch device, otherwise use drawer
-    useModal = isDesktopSize && !isTouchDevice;
-  };
-
-  // Handle iframe rendering for modal (outside shadow DOM)
-  $: if (useModal && modalContentRef && $openState) {
-    const slotContent = modalContentRef.getContentElement();
-    if (slotContent) mountModalIframe(slotContent);
-  } else if (!$openState && iframeElement) {
-    // Clean up iframe when modal closes
-    if (iframeElement.parentNode) {
-      iframeElement.parentNode.parentNode?.removeChild(iframeElement.parentNode);
-    }
-    iframeElement = undefined;
-  }
 
   /**
    * Constructs a proper URL ensuring no double slashes and adding cache busting
@@ -208,94 +163,6 @@
     return url.toString();
   };
 
-  iframeSrc.set(constructReservationUrl());
-
-  const handleMessage = (event: MessageEvent<unknown>) => {
-    if (!isReservineNavigationMessage(event.data)) return;
-
-    const currentOrigin = new URL($iframeSrc).origin;
-    if (event.origin !== currentOrigin) return;
-
-    const nextUrl = new URL(event.data.route, currentOrigin);
-    if (nextUrl.origin === currentOrigin) {
-      pendingIframeSrc.set(nextUrl.toString());
-    }
-  };
-
-  const isReservineNavigationMessage = (
-    value: unknown
-  ): value is { type: typeof IntegrationConstants.reservineNavigation; route: string } =>
-    typeof value === 'object' &&
-    value !== null &&
-    'type' in value &&
-    value.type === IntegrationConstants.reservineNavigation &&
-    'route' in value &&
-    typeof value.route === 'string';
-
-  onMount(() => {
-    injectMainStyles();
-    detectDevice();
-
-    const handleResize = () => detectDevice();
-
-    window.addEventListener('message', handleMessage);
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('message', handleMessage);
-      window.removeEventListener('resize', handleResize);
-    };
-  });
-
-  const handleOpenChange = (isOpen: boolean) => {
-    if (opened !== isOpen) {
-      opened = isOpen;
-      dispatch('reservine-open-change', { open: isOpen });
-    }
-    openState.set(isOpen);
-
-    if (isOpen) {
-      const adjustedFontSize = getAdjustedFontSize(IntegrationConstants.baseFontSize);
-      updateVariableStyles(adjustedFontSize);
-
-      const useAdjustedFontSize = adjustedFontSize !== IntegrationConstants.baseFontSize && !disableUseOfAdjustedFontSize;
-
-      if (useAdjustedFontSize) {
-        console.log(
-          `%cReservine%c will use adjusted font size: %c${adjustedFontSize}px`,
-          `color: ${ResConsole.blue}; font-weight: bold;`,
-          'color: inherit;',
-          `color: ${ResConsole.yellow}; font-weight: bold;`
-        );
-
-        console.log(
-          `%cReservine:%c You can disable the use of adjusted font size by setting '%cdisableUseOfAdjustedFontSize%c' to '%ctrue%c'.`,
-          `color: ${ResConsole.blue}; font-weight: bold;`,
-          'color: inherit;',
-          `color: ${ResConsole.green}; font-weight: bold;`,  // Property name in green
-          'color: inherit;',
-          `color: ${ResConsole.yellow}; font-weight: bold;`, // "true" in yellow
-          'color: inherit;'
-        );
-
-        iframeSrc.set(constructReservationUrl(adjustedFontSize));
-      } else {
-        console.log(
-          `%cReservine%c will use default font size: %c${IntegrationConstants.baseFontSize}px`,
-          `color: ${ResConsole.blue}; font-weight: bold;`,
-          'color: inherit;',
-          `color: ${ResConsole.yellow}; font-weight: bold;`
-        );
-        iframeSrc.set(constructReservationUrl());
-      }
-    } else {
-      pendingIframeSrc.update((pendingUrl) => {
-        if (pendingUrl) iframeSrc.set(pendingUrl);
-        return '';
-      });
-    }
-  };
-
   const getContrastColor = (hexColor: string): string => {
     hexColor = hexColor.replace("#", "");
     const r = parseInt(hexColor.substring(0, 2), 16);
@@ -327,32 +194,6 @@
     [ButtonSize.Large]: 'height: 3.5rem; font-size: 1rem; padding: 0 1rem;',
   };
 
-  const injectMainStyles = () => {
-    if (!document.getElementById('reservine-button-styles')) {
-      const styleElement = document.createElement('style');
-      styleElement.id = 'reservine-button-styles';
-      styleElement.textContent = reservineButtonStyles;
-      document.head.appendChild(styleElement);
-    }
-  };
-
-  const updateVariableStyles = (adjustedFontSize: number) => {
-    let variableStyleElement = document.getElementById('reservine-variable-styles');
-
-    // Create the style element if it doesn't exist
-    if (!variableStyleElement) {
-      variableStyleElement = document.createElement('style');
-      variableStyleElement.id = 'reservine-variable-styles';
-      document.head.appendChild(variableStyleElement);
-    }
-
-    // Update the font size only if it has changed
-    const currentFontSize = variableStyleElement.getAttribute('data-adjusted-font-size');
-    if (currentFontSize !== adjustedFontSize.toString()) {
-      variableStyleElement.textContent = `:root { --reservine-font-size: ${adjustedFontSize}px; }`;
-      variableStyleElement.setAttribute('data-adjusted-font-size', adjustedFontSize.toString());
-    }
-  };
 </script>
 
 <style>
@@ -397,43 +238,20 @@
   }
 </style>
 
-{#if useModal}
-  <Modal.Root bind:open={$openState} onOpenChange={handleOpenChange}>
-    <Modal.Trigger
-      style="--bg-color: {color}; --hover-bg-color: {hoverColor}; --text-color: {textColor}; --border-radius: {borderRadius}; {asWrapper ? 'all: unset; cursor:pointer;' : `${buttonSizes[size]}`}"
-      class="{asWrapper ? 'as-wrapper' : `reservine-button ${appearance}`} {width === ButtonWidth.Full ? 'full-width' : 'auto-width'}"
-    >
-      {#if asWrapper}
-        <slot />
-      {:else}
-        <span>{displayText}</span>
-      {/if}
-    </Modal.Trigger>
-
-    <Modal.Content bind:this={modalContentRef} onContentReady={mountModalIframe} />
-  </Modal.Root>
-{:else}
-  <Drawer.Root bind:open={$openState} onOpenChange={handleOpenChange}>
-    <Drawer.Trigger
-      style="--bg-color: {color}; --hover-bg-color: {hoverColor}; --text-color: {textColor}; --border-radius: {borderRadius}; {asWrapper ? 'all: unset; cursor:pointer;' : `${buttonSizes[size]}`}"
-      class="{asWrapper ? 'as-wrapper' : `reservine-button ${appearance}`} {width === ButtonWidth.Full ? 'full-width' : 'auto-width'}"
-    >
-      {#if asWrapper}
-        <slot />
-      {:else}
-        <span>{displayText}</span>
-      {/if}
-    </Drawer.Trigger>
-
-    <Drawer.Content class="r-drawer-content">
-      <div style="width: 100%!important; height: 100%!important;">
-        <iframe
-          title="Reservine"
-          allow="payment"
-          src={$iframeSrc}
-          style="width: 100%!important; height: 100%!important; border: none!important;"
-        ></iframe>
-      </div>
-    </Drawer.Content>
-  </Drawer.Root>
-{/if}
+<PurchaseShell
+  bind:this={shell}
+  bind:opened
+  buildUrl={constructReservationUrl}
+  {disableUseOfAdjustedFontSize}
+  onOpenChange={handleOpenChange}
+  triggerStyle="--bg-color: {color}; --hover-bg-color: {hoverColor}; --text-color: {textColor}; --border-radius: {borderRadius}; {asWrapper ? 'all: unset; cursor:pointer;' : `${buttonSizes[size]}`}"
+  triggerClass="{asWrapper ? 'as-wrapper' : `reservine-button ${appearance}`} {width === ButtonWidth.Full ? 'full-width' : 'auto-width'}"
+>
+  <svelte:fragment slot="trigger">
+    {#if asWrapper}
+      <slot />
+    {:else}
+      <span>{displayText}</span>
+    {/if}
+  </svelte:fragment>
+</PurchaseShell>

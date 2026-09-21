@@ -4,7 +4,11 @@ export const IntegrationConstants = {
   employee: 'employee',
   promo: 'promo',
   reservineNavigation: 'reservine-navigation',
+  reservineMembershipPurchased: 'reservine-membership-purchased',
+  reservinePrimary: 'reservine-primary',
+  reservineHost: 'reservine-host',
   reservineTheme: 'reservine-theme',
+  branch: 'branch',
   service: 'service',
   showGallery: 'showGallery'
 } as const;

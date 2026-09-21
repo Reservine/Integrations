@@ -18,3 +18,16 @@ export function getAdjustedFontSize(defaultFontSize = 16) {
   // Adjust base font size inversely to zoom
   return defaultFontSize / zoomScale;
 }
+
+/**
+ * Navigates the top-level window (the host page, even when the SDK itself runs
+ * inside a frame). A cross-origin `top` throws on access, so fall back to the
+ * current window.
+ */
+export function navigateTopWindow(url: string): void {
+  try {
+    (window.top ?? window).location.href = url;
+  } catch {
+    window.location.href = url;
+  }
+}

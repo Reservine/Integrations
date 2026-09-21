@@ -46,6 +46,35 @@
         </div>
         <output data-testid="open-state">closed</output>
       </section>
+
+      <section>
+        <h2>Membership plans (devlp · FitFlow)</h2>
+        <p>
+          Native cards from the widget DTO; Buy opens the chrome-less checkout in the same
+          modal/drawer the booking button uses. Register <code>http://localhost:3333</code> under
+          Settings › Tenant › Domains on devlp for the cards to load.
+        </p>
+        <reservine-memberships
+          data-testid="memberships-grid"
+          partner="fitflow"
+          api-url="https://api.reservine.devlp.lovinka.com"
+          locale="cs"
+          theme="dark"
+        ></reservine-memberships>
+        <div class="actions" style="margin-top: 24px">
+          <reservine-memberships
+            data-testid="memberships-single"
+            partner="fitflow"
+            api-url="https://api.reservine.devlp.lovinka.com"
+            plan="1"
+            primary="#e11d48"
+            radius="6px"
+            buy-text="Join now"
+            success-url="http://localhost:3333/?purchased=1"
+          ></reservine-memberships>
+        </div>
+        <output data-testid="purchase-state">no purchase yet</output>
+      </section>
     </main>
 
     <script type="module">
@@ -57,6 +86,11 @@
       document.querySelector('[data-testid="close-controlled"]').addEventListener('click', () => element.close());
       element.addEventListener('reservine-open-change', (event) => {
         state.value = event.detail.open ? 'open' : 'closed';
+      });
+
+      const purchaseState = document.querySelector('[data-testid="purchase-state"]');
+      document.addEventListener('reservine-membership-purchased', (event) => {
+        purchaseState.value = `purchased plan ${event.detail.planId} (order ${event.detail.orderId})`;
       });
     </script>
   </body>
