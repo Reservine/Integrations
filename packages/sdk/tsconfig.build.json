@@ -10,6 +10,7 @@
   "include": [
     "src/contract.ts",
     "src/browser.ts",
+    "src/build-env.d.ts",
     "src/element.ts",
     "src/index.ts",
     "src/adapters/react.tsx",

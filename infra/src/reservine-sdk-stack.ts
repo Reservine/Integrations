@@ -48,7 +48,9 @@ export class ReservineSdkStack extends Stack {
       },
       customHeadersBehavior: {
         customHeaders: [
-          { header: 'Cross-Origin-Resource-Policy', value: 'cross-origin', override: true }
+          { header: 'Cross-Origin-Resource-Policy', value: 'cross-origin', override: true },
+          // Lets any embedding page read the SDK's Resource Timing (size, duration).
+          { header: 'Timing-Allow-Origin', value: '*', override: true }
         ]
       },
       securityHeadersBehavior: {

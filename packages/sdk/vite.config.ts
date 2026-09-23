@@ -3,9 +3,12 @@ import { resolve } from 'node:path';
 import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { defineConfig } from 'vite';
 
+import { version } from './package.json';
+
 const frameworkPeers = ['@angular/core', 'react', 'react/jsx-runtime', 'svelte', 'vue'];
 
 export default defineConfig({
+  define: { __RESERVINE_SDK_VERSION__: JSON.stringify(version) },
   // vitest resolves `svelte` to its SSR entry (where onMount is a no-op) unless the
   // browser condition is on; the jsdom suites mount real custom elements.
   resolve: process.env.VITEST ? { conditions: ['browser'] } : undefined,

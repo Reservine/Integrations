@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import { expect, test } from '@playwright/test';
 
 const expectedTenantOrigin = 'https://mytimegym.reservine.me';
@@ -122,5 +124,63 @@ test.describe('Reservine SDK playground', () => {
     await expect(closeButton).toBeHidden();
     await expect(iframe).toHaveCount(0);
     await expect(state).toHaveText('closed');
+  });
+
+  test('restores the page scroll instantly on close under a host smooth-scroll rule', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'mobile-chromium', 'The drawer pins the body and restores the scroll');
+
+    await page.addStyleTag({ content: 'html { scroll-behavior: smooth !important; } body { padding-bottom: 200vh; }' });
+    const trigger = page.getByTestId('wrapped-trigger');
+    await trigger.evaluate((element) => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
+    const before = await page.evaluate(() => Math.round(window.scrollY));
+    expect(before).toBeGreaterThan(100);
+    const near = (y: number) => Math.abs(y - before) <= 2;
+
+    await trigger.click();
+    const closeButton = page.getByRole('button', { name: 'Close booking' });
+    await expect(closeButton).toBeVisible();
+
+    await page.evaluate(() => {
+      const samples: number[] = [];
+      (window as Window & { scrollSamples?: number[] }).scrollSamples = samples;
+      const tick = () => {
+        samples.push(Math.round(window.scrollY));
+        if (samples.length < 120) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+    await closeButton.click();
+    await expect.poll(async () => near(await page.evaluate(() => window.scrollY))).toBe(true);
+
+    // Pinned at 0 while open, then straight back — no smooth-scroll frames in between.
+    const samples = await page.evaluate(() => (window as Window & { scrollSamples?: number[] }).scrollSamples ?? []);
+    expect(samples.filter((y) => y > 2 && !near(y))).toEqual([]);
+  });
+
+  test('hands the host its <html> scroll styles back after a programmatic drawer close', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'mobile-chromium', 'Mobile-drawer journey');
+
+    const wrappedButton = page.getByTestId('wrapped-button');
+    const html = page.locator('html');
+    await wrappedButton.getByTestId('wrapped-trigger').click();
+    await expect(page.getByRole('button', { name: 'Close booking' })).toBeVisible();
+    await expect(html).toHaveAttribute('style', /overscroll-behavior: none/);
+
+    await wrappedButton.evaluate((element: HTMLElement & { close: () => void }) => element.close());
+    await expect(page.getByRole('button', { name: 'Close booking' })).toBeHidden();
+    await expect(html).not.toHaveAttribute('style', /scroll-behavior/);
+  });
+
+  test('exposes the package version on the ReservineSDK browser global', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chromium', 'A build constant needs one browser');
+
+    const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string };
+    await page.goto('about:blank');
+    await page.addScriptTag({ path: 'dist/cdn/sdk.js' });
+
+    const exposed = await page.evaluate(
+      () => (window as Window & { ReservineSDK?: { version?: unknown } }).ReservineSDK?.version
+    );
+    expect(exposed).toBe(version);
   });
 });

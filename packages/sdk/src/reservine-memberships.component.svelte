@@ -39,6 +39,7 @@
     type MembershipLocale
   } from './utils/membership-copy.js';
   import { navigateTopWindow } from './utils/reservine-integration.utils';
+  import { fetchWidgetData } from './utils/widget-request.js';
 
   export let partner: string = '';
   export let apiUrl: string = 'https://api.reservine.io';
@@ -71,7 +72,8 @@
     return url.toString();
   };
 
-  const load = async (): Promise<void> => {
+  /** `fresh` skips joining another instance's in-flight request for the same URL. */
+  const load = async (fresh = false): Promise<void> => {
     if (!partner) {
       status = 'error';
       data = null;
@@ -81,10 +83,10 @@
     status = 'loading';
 
     try {
-      const response = await fetch(widgetUrl(), { credentials: 'omit' });
+      const response = await fetchWidgetData(widgetUrl(), fresh);
       if (token !== requestToken) return;
 
-      const body = await response.json().catch(() => null);
+      const { body } = response;
       if (response.status === 403) {
         data = body?.data?.tenant ? { ...body.data, plans: [] } : null;
         status = 'domain';
@@ -94,19 +96,21 @@
         status = 'error';
         return;
       }
-      data = body.data as ReservineMembershipsData;
+      data = body.data;
       status = 'ready';
     } catch {
       if (token === requestToken) status = 'error';
     }
   };
 
+  /** Always a fresh request (the Retry button too), never another instance's in-flight one. */
   export function refresh(): void {
-    void load();
+    void load(true);
   }
 
-  // Re-fetch whenever the data-shaping props change (runs once on creation).
-  $: partner, branch, apiUrl, refresh();
+  // Re-fetch whenever the data-shaping props change (runs once on creation);
+  // instances loading the same widget URL at the same time share one request.
+  $: partner, branch, apiUrl, void load();
 
   $: visiblePlans = data
     ? plan != null
