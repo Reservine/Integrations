@@ -68,6 +68,8 @@ The compatible `v1` channel automatically receives non-breaking releases. Exact 
 <reservine-button partner="mytimegym" text="Book now"></reservine-button>
 ```
 
+`window.ReservineSDK.version` reports the release the page is running (for example `1.1.1`).
+
 ## Memberships widget
 
 `<reservine-memberships>` renders the tenant's membership plans as cards inside your own page and opens the Reservine checkout (login, billing, Apple/Google Pay, saved cards, 3DS) when a visitor clicks Buy.

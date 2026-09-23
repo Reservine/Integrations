@@ -56,10 +56,15 @@ const nbsp = (value: string | null | undefined) => (value ?? '').replace(/[  
 
 const shadow = (element: HTMLElement) => element.shadowRoot as ShadowRoot;
 
-const mountElement = async (attributes: Record<string, string>) => {
+const appendElement = (attributes: Record<string, string>) => {
   const element = document.createElement('reservine-memberships') as ReservineMembershipsElement;
   for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, value);
   document.body.appendChild(element);
+  return element;
+};
+
+const mountElement = async (attributes: Record<string, string>) => {
+  const element = appendElement(attributes);
   await flush();
   return element;
 };
@@ -361,5 +366,64 @@ describe('<reservine-memberships>', () => {
     expect(hint?.textContent).toContain('FitFlow Studios');
     expect(hint?.textContent).toContain('Settings › Public profile › Domains');
     expect(shadow(element).querySelectorAll('.rm-card')).toHaveLength(0);
+  });
+
+  it('shares one widget request between instances with the same api-url, partner and branch', async () => {
+    const grid = appendElement({ partner: 'fitflow', branch: '3' });
+    const single = appendElement({ partner: 'fitflow', branch: '3', plan: '7' });
+    const otherBranch = appendElement({ partner: 'fitflow' });
+    await flush();
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual(
+      expect.arrayContaining([
+        'https://api.reservine.io/api/widget/fitflow/memberships?branch=3',
+        'https://api.reservine.io/api/widget/fitflow/memberships'
+      ])
+    );
+    expect(shadow(grid).querySelectorAll('.rm-card')).toHaveLength(2);
+    expect(shadow(single).querySelector('.rm-card')?.getAttribute('data-plan-id')).toBe('7');
+    expect(shadow(otherBranch).querySelectorAll('.rm-card')).toHaveLength(2);
+  });
+
+  it('refresh() sends a fresh request instead of joining the one in flight', async () => {
+    let release: (response: Response) => void = () => {};
+    fetchMock.mockImplementationOnce(
+      () => new Promise<Response>((resolve) => {
+        release = resolve;
+      })
+    );
+    const first = appendElement({ partner: 'fitflow' });
+    const second = appendElement({ partner: 'fitflow' });
+    await flush();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    second.refresh();
+    await flush();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(shadow(second).querySelectorAll('.rm-card')).toHaveLength(2);
+
+    release(jsonResponse({ data: DTO }));
+    await flush();
+    expect(shadow(first).querySelectorAll('.rm-card')).toHaveLength(2);
+  });
+
+  it('never keeps a failed request: later instances and Retry go back to the network', async () => {
+    fetchMock.mockImplementationOnce(() => Promise.reject(new TypeError('Failed to fetch')));
+    const first = appendElement({ partner: 'fitflow' });
+    const second = appendElement({ partner: 'fitflow' });
+    await flush();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(shadow(first).querySelector('[data-reservine-state="error"]')).not.toBeNull();
+    expect(shadow(second).querySelector('[data-reservine-state="error"]')).not.toBeNull();
+
+    const later = await mountElement({ partner: 'fitflow' });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(shadow(later).querySelectorAll('.rm-card')).toHaveLength(2);
+
+    shadow(first).querySelector<HTMLButtonElement>('[data-reservine-state="error"] button')?.click();
+    await flush();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(shadow(first).querySelectorAll('.rm-card')).toHaveLength(2);
   });
 });

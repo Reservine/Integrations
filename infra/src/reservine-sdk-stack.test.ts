@@ -42,17 +42,31 @@ describe('Reservine SDK infrastructure', () => {
     template.hasResourceProperties('AWS::CloudFront::ResponseHeadersPolicy', {
       ResponseHeadersPolicyConfig: Match.objectLike({
         CustomHeadersConfig: {
-          Items: [
+          Items: Match.arrayWith([
             {
               Header: 'Cross-Origin-Resource-Policy',
               Override: true,
               Value: 'cross-origin'
             }
-          ]
+          ])
         },
         SecurityHeadersConfig: Match.objectLike({
           ContentTypeOptions: { Override: true }
         })
+      })
+    });
+  });
+
+  it('exposes resource timing to every embedding origin next to the CORS headers', () => {
+    synthesize().hasResourceProperties('AWS::CloudFront::ResponseHeadersPolicy', {
+      ResponseHeadersPolicyConfig: Match.objectLike({
+        CorsConfig: Match.objectLike({
+          AccessControlAllowOrigins: { Items: ['*'] },
+          AccessControlExposeHeaders: { Items: ['ETag'] }
+        }),
+        CustomHeadersConfig: {
+          Items: Match.arrayWith([{ Header: 'Timing-Allow-Origin', Override: true, Value: '*' }])
+        }
       })
     });
   });

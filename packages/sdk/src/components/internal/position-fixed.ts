@@ -77,7 +77,9 @@ export function handlePositionFixed({
         return;
       }
 
-      window.scrollTo(x, y);
+      // `instant` wins over any host `scroll-behavior: smooth` (even `!important`),
+      // which would otherwise animate the page from the top back to where it was.
+      window.scrollTo({ left: x, top: y, behavior: 'instant' });
     });
 
     previousBodyPosition = null;
