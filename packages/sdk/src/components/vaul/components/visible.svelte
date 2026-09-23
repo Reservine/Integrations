@@ -4,6 +4,7 @@
 	// state, which triggers the open animation
 	import { onMount } from "svelte";
 	import { getCtx } from "../ctx.js";
+	import { reset } from "../../internal/helpers/style.js";
 
 	const {
 		states: { visible },
@@ -16,6 +17,9 @@
 		return () => {
 			scaleBackground(false);
 			restorePositionSetting();
+			// Every close path unmounts the content (a programmatic close never reaches
+			// closeDrawer()), so the host gets its own <html> scroll styles back here.
+			reset(document.documentElement);
 		};
 	});
 </script>

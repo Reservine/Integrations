@@ -785,11 +785,6 @@ export function createVaul(props: CreateVaulProps) {
     }
     openTime.set(new Date());
     scaleBackground(true, props.backgroundColor);
-    // Every close path — a programmatic `open = false` skips closeDrawer() — and an
-    // unmount while open hand the host its own <html> scroll styles back.
-    return () => {
-      if (isBrowser) reset(document.documentElement);
-    };
   });
 
   effect([visible], ([$visible]) => {
