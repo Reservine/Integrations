@@ -92,6 +92,12 @@ Configuration, shared by every adapter:
 
 Every adapter emits `openChange` (checkout opened/closed) and `purchased` with `{ orderId, planId }`; the plain element dispatches the same as the DOM events `reservine-open-change` and `reservine-membership-purchased`. For fine-grained styling set `--reservine-*` custom properties on the element; they win over both the tenant palette and the props.
 
+While plans load, the element shows one row of card-sized placeholders, `22.54125rem` tall. Reserve that height before the SDK script runs so the page never shifts:
+
+```css
+reservine-memberships:not(:defined) { display: block; min-height: 22.54125rem; }
+```
+
 ### React
 
 ```tsx

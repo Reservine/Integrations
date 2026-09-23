@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 
 import { expect, test } from '@playwright/test';
 
+import type { ReservineMembershipsData } from '../src/contract';
+
 const expectedTenantOrigin = 'https://mytimegym.reservine.me';
 
 test.describe('Reservine SDK playground', () => {
@@ -169,6 +171,57 @@ test.describe('Reservine SDK playground', () => {
     await wrappedButton.evaluate((element: HTMLElement & { close: () => void }) => element.close());
     await expect(page.getByRole('button', { name: 'Close booking' })).toBeHidden();
     await expect(html).not.toHaveAttribute('style', /scroll-behavior/);
+  });
+
+  test('reserves one typical card row while loading, so the plans replace it without a shift', async ({ page }) => {
+    const typicalPlan: ReservineMembershipsData = {
+      tenant: { slug: 'skeleton-check', name: 'Skeleton Check', locale: 'en', currency: 'CZK' },
+      theme: null,
+      branches: [],
+      plans: [
+        {
+          id: 1,
+          name: 'Pro',
+          description: 'Unlimited classes',
+          price: 1490,
+          currency_code: 'CZK',
+          duration_months: 12,
+          kind: 'subscription',
+          uses_per_voucher: 0,
+          usage_per: null,
+          branch_id: null
+        }
+      ]
+    };
+    let release: () => void = () => {};
+    const released = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    await page.route('https://api.reservine.io/api/widget/skeleton-check/memberships', async (route) => {
+      await released;
+      await route.fulfill({ headers: { 'access-control-allow-origin': '*' }, json: { data: typicalPlan } });
+    });
+    await page.evaluate(() => {
+      const element = document.createElement('reservine-memberships');
+      element.setAttribute('partner', 'skeleton-check');
+      element.dataset.testid = 'skeleton-check';
+      document.body.prepend(element);
+    });
+    const root = page.getByTestId('skeleton-check').locator('.rm-root');
+    const heightInRem = () =>
+      root.evaluate(
+        (element) =>
+          element.getBoundingClientRect().height / parseFloat(getComputedStyle(document.documentElement).fontSize)
+      );
+
+    await expect(root.locator('[aria-busy="true"]')).toBeVisible();
+    const skeleton = await heightInRem();
+    release();
+    await expect(root.locator('[data-plan-id]')).toHaveCount(1);
+
+    expect(await heightInRem()).toBeCloseTo(skeleton, 1);
+    // The reservation the docs publish: reservine-memberships:not(:defined) { min-height: 22.54125rem }
+    expect(skeleton).toBeCloseTo(22.54125, 2);
   });
 
   test('exposes the package version on the ReservineSDK browser global', async ({ page }, testInfo) => {

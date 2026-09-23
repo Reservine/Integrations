@@ -280,6 +280,8 @@
     display: block;
     color: var(--reservine-fg, var(--rm-fg));
     font-family: var(--reservine-font, var(--rm-font, inherit));
+    /* Owned, not inherited: a card (and its skeleton) is the same height on every host. */
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -442,12 +444,24 @@
     cursor: pointer;
   }
 
+  /* One row of skeletons at any width: cards past the first row collapse and clip. */
+  .rm-loading {
+    grid-template-rows: auto;
+    grid-auto-rows: 0;
+    row-gap: 0;
+    overflow: hidden;
+  }
+
+  /* A real card's structure with hidden placeholder text, so it is exactly as tall
+     as a typical card: one-line name and description, two checklist rows. */
   .rm-skeleton {
-    height: 18rem;
-    border-radius: var(--reservine-radius, var(--rm-radius));
     background: var(--reservine-card-bg, var(--rm-bg-muted));
     opacity: 0.6;
     animation: rm-pulse 1.4s ease-in-out infinite;
+  }
+
+  .rm-skeleton > * {
+    visibility: hidden;
   }
 
   @keyframes rm-pulse {
@@ -457,9 +471,21 @@
 
 <div bind:this={root} class="rm-root" data-theme={mode} style={cssVars}>
   {#if status === 'loading'}
-    <div class="rm-grid" aria-busy="true">
+    <div class="rm-grid rm-loading" aria-busy="true">
       {#each Array(plan != null ? 1 : 2) as _}
-        <div class="rm-skeleton"></div>
+        <div class="rm-card rm-skeleton" aria-hidden="true">
+          <div class="rm-head">
+            <p class="rm-kind">&nbsp;</p>
+            <p class="rm-name">&nbsp;</p>
+            <p class="rm-desc">&nbsp;</p>
+          </div>
+          <div class="rm-seam"></div>
+          <div class="rm-stub">
+            <ul class="rm-list"><li>&nbsp;</li><li>&nbsp;</li></ul>
+            <p class="rm-price"><span class="rm-amount">&nbsp;</span></p>
+            <div class="rm-buy">&nbsp;</div>
+          </div>
+        </div>
       {/each}
     </div>
   {:else if status === 'domain'}
