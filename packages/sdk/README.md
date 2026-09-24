@@ -92,6 +92,8 @@ Configuration, shared by every adapter:
 
 Every adapter emits `openChange` (checkout opened/closed) and `purchased` with `{ orderId, planId }`; the plain element dispatches the same as the DOM events `reservine-open-change` and `reservine-membership-purchased`. For fine-grained styling set `--reservine-*` custom properties on the element; they win over both the tenant palette and the props.
 
+Day-based plans (a 14-day pass) show their period in days since SDK 1.2.0: "Valid for 14 days", and a day subscription prices and counts uses per period ("/ 14 days", "8 uses every 14 days"). Earlier SDKs omit the validity row for day plans and still price a day subscription per month.
+
 While plans load, the element shows one row of card-sized placeholders, `22.54125rem` tall. Reserve that height before the SDK script runs so the page never shifts:
 
 ```css

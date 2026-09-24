@@ -45,6 +45,17 @@ const DTO: ReservineMembershipsData = {
   ]
 };
 
+/** Day-based plans: the API sends `duration_months: 0` beside `duration_days`. */
+const DAY_DTO: ReservineMembershipsData = {
+  ...DTO,
+  plans: [
+    { ...DTO.plans[0], id: 31, duration_months: 0, duration_days: 14, uses_per_voucher: 8 },
+    { ...DTO.plans[0], id: 32, duration_months: 0, duration_days: 1, uses_per_voucher: 2 },
+    { ...DTO.plans[0], id: 33, duration_months: 0, duration_days: 3, uses_per_voucher: 5 },
+    { ...DTO.plans[1], id: 34, duration_months: 0, duration_days: 10 }
+  ]
+};
+
 const jsonResponse = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 
@@ -55,6 +66,14 @@ const flush = async () => {
 const nbsp = (value: string | null | undefined) => (value ?? '').replace(/[  ]/g, ' ').trim();
 
 const shadow = (element: HTMLElement) => element.shadowRoot as ShadowRoot;
+
+const checklist = (element: HTMLElement, planId: number) =>
+  Array.from(shadow(element).querySelectorAll(`[data-plan-id="${planId}"] .rm-list li`), (row) =>
+    row.textContent?.trim()
+  );
+
+const priceSuffix = (element: HTMLElement, planId: number) =>
+  shadow(element).querySelector(`[data-plan-id="${planId}"] .rm-suffix`)?.textContent?.trim();
 
 const appendElement = (attributes: Record<string, string>) => {
   const element = document.createElement('reservine-memberships') as ReservineMembershipsElement;
@@ -352,6 +371,51 @@ describe('<reservine-memberships>', () => {
 
     const custom = await mountElement({ partner: 'fitflow', 'buy-text': 'Join now', plan: '12' });
     expect(shadow(custom).querySelector('.rm-buy')?.textContent?.trim()).toBe('Join now');
+  });
+
+  it('shows a day plan’s validity in days, with Czech den / dny / dní plurals', async () => {
+    fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({ data: DAY_DTO })));
+
+    const cs = await mountElement({ partner: 'fitflow', locale: 'cs' });
+    expect(checklist(cs, 31)).toContain('Platí 14 dní');
+    expect(checklist(cs, 32)).toContain('Platí 1 den');
+    expect(checklist(cs, 33)).toContain('Platí 3 dny');
+    expect(checklist(cs, 34)).toEqual(['10 použití', 'Platí 10 dní']);
+
+    const en = await mountElement({ partner: 'fitflow', locale: 'en' });
+    expect(checklist(en, 31)).toContain('Valid for 14 days');
+    expect(checklist(en, 32)).toContain('Valid for 1 day');
+  });
+
+  it('counts a day subscription’s uses per renewal period instead of per month', async () => {
+    fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({ data: DAY_DTO })));
+
+    const cs = await mountElement({ partner: 'fitflow', locale: 'cs' });
+    expect(checklist(cs, 31)).toEqual([
+      '8 použití každých 14 dní',
+      'Platí 14 dní',
+      'Zrušíte kdykoli'
+    ]);
+    expect(checklist(cs, 32)).toContain('2 použití denně');
+    expect(checklist(cs, 33)).toContain('5 použití každé 3 dny');
+
+    const en = await mountElement({ partner: 'fitflow', locale: 'en' });
+    expect(checklist(en, 31)).toContain('8 uses every 14 days');
+    expect(checklist(en, 32)).toContain('2 uses per day');
+  });
+
+  it('prices a day subscription per its period, not per month', async () => {
+    fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({ data: DAY_DTO })));
+
+    const cs = await mountElement({ partner: 'fitflow', locale: 'cs' });
+    expect(priceSuffix(cs, 31)).toBe('/ 14 dní');
+    expect(priceSuffix(cs, 32)).toBe('/ den');
+    expect(priceSuffix(cs, 33)).toBe('/ 3 dny');
+    expect(priceSuffix(cs, 34)).toBe('jednorázově');
+
+    const en = await mountElement({ partner: 'fitflow', locale: 'en' });
+    expect(priceSuffix(en, 31)).toBe('/ 14 days');
+    expect(priceSuffix(en, 32)).toBe('/ day');
   });
 
   it('shows the domain-registration hint on 403 domain_not_registered', async () => {

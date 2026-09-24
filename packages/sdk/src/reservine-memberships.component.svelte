@@ -24,7 +24,6 @@
    */
   import PurchaseShell from './purchase-shell.svelte';
   import type {
-    ReservineMembershipPlan,
     ReservineMembershipPurchasedDetail,
     ReservineMembershipsData,
     ReservineMembershipsTheme
@@ -35,6 +34,7 @@
     formatMembershipPrice,
     membershipChecklist,
     membershipCopy,
+    membershipPriceSuffix,
     resolveMembershipLocale,
     type MembershipLocale
   } from './utils/membership-copy.js';
@@ -126,12 +126,6 @@
     data?.tenant.locale
   ) as MembershipLocale;
   $: copy = membershipCopy(resolvedLocale);
-
-  const priceSuffix = (item: ReservineMembershipPlan): string =>
-    item.kind === 'subscription' ? copy.perMonth : copy.oneTime;
-
-  const kindLabel = (item: ReservineMembershipPlan): string =>
-    item.kind === 'subscription' ? copy.kindSubscription : copy.kindOneTime;
 
   // --- theme ------------------------------------------------------------------
 
@@ -506,7 +500,7 @@
       {#each visiblePlans as item (item.id)}
         <article class="rm-card" data-plan-id={item.id} data-plan-kind={item.kind}>
           <div class="rm-head">
-            <p class="rm-kind">{kindLabel(item)}</p>
+            <p class="rm-kind">{item.kind === 'subscription' ? copy.kindSubscription : copy.kindOneTime}</p>
             <h3 class="rm-name">{item.name}</h3>
             {#if item.description}
               <p class="rm-desc">{item.description}</p>
@@ -526,7 +520,7 @@
             </ul>
             <p class="rm-price">
               <span class="rm-amount">{formatMembershipPrice(resolvedLocale, item.price, item.currency_code)}</span>
-              <span class="rm-suffix">{priceSuffix(item)}</span>
+              <span class="rm-suffix">{membershipPriceSuffix(resolvedLocale, item)}</span>
             </p>
             <button
               type="button"

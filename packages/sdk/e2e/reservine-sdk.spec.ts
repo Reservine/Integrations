@@ -186,6 +186,7 @@ test.describe('Reservine SDK playground', () => {
           price: 1490,
           currency_code: 'CZK',
           duration_months: 12,
+          duration_days: null,
           kind: 'subscription',
           uses_per_voucher: 0,
           usage_per: null,
