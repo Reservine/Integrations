@@ -114,8 +114,8 @@ export interface ReservineMembershipsProps {
   branch?: number | null;
   /** Render only this plan's card. */
   plan?: number | null;
-  /** Card language: `cs` | `en`. Defaults to the page language, then the tenant locale. */
-  locale?: 'cs' | 'en' | string;
+  /** Card language: `cs` | `en` | `sk`. Defaults to the page language, then the tenant locale. */
+  locale?: 'cs' | 'en' | 'sk' | string;
   /** Card colour scheme; `auto` follows `prefers-color-scheme`. */
   theme?: ReservineMembershipsTheme;
   /** Host override of the tenant primary colour (hex). Forwarded into the checkout. */

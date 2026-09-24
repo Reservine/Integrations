@@ -1,12 +1,18 @@
 import type { ReservineMembershipPlan } from '../contract.js';
 
-/** Card copy lives beside the card that renders it (decision D9): cs + en, facts come from the API. */
-export type MembershipLocale = 'cs' | 'en';
+/** Card copy lives beside the card that renders it (decision D9): cs + en + sk, facts come from the API. */
+export type MembershipLocale = 'cs' | 'en' | 'sk';
 
+const MEMBERSHIP_LOCALES: readonly MembershipLocale[] = ['cs', 'en', 'sk'];
+
+/** Czech and Slovak share the one / few (2–4) / other plural split. */
 const CS_PLURAL = (count: number, one: string, few: string, other: string): string =>
   count === 1 ? one : count >= 2 && count <= 4 ? few : other;
 
 const CS_DAYS = (count: number): string => `${count} ${CS_PLURAL(count, 'den', 'dny', 'dní')}`;
+const SK_DAYS = (count: number): string => `${count} ${CS_PLURAL(count, 'deň', 'dni', 'dní')}`;
+const SK_USES = (count: number): string =>
+  `${count} ${CS_PLURAL(count, 'použitie', 'použitia', 'použití')}`;
 const EN_DAYS = (count: number): string => `${count} ${count === 1 ? 'day' : 'days'}`;
 
 interface MembershipCopy {
@@ -75,6 +81,29 @@ const COPY: Record<MembershipLocale, MembershipCopy> = {
       `This domain is not registered for ${tenant} in Reservine › Settings › Public profile › Domains.`,
     loadFailed: 'Plans could not be loaded.',
     retry: 'Retry'
+  },
+  sk: {
+    tag: 'sk-SK',
+    kindSubscription: 'Predplatné',
+    kindOneTime: 'Jednorazový nákup',
+    perMonth: '/ mesiac',
+    perDays: (days) => (days === 1 ? '/ deň' : `/ ${SK_DAYS(days)}`),
+    oneTime: 'jednorazovo',
+    validMonths: (count) =>
+      `Platí ${count} ${CS_PLURAL(count, 'mesiac', 'mesiace', 'mesiacov')}`,
+    validDays: (days) => `Platí ${SK_DAYS(days)}`,
+    usesPerMonth: (count) => `${SK_USES(count)} mesačne`,
+    usesPerDays: (count, days) =>
+      `${SK_USES(count)} ${CS_PLURAL(days, 'denne', `každé ${SK_DAYS(days)}`, `každých ${SK_DAYS(days)}`)}`,
+    usesOneTime: (count) => SK_USES(count),
+    cancelAnytime: 'Zrušíte kedykoľvek',
+    buy: 'Kúpiť',
+    planNotFound: 'Tento plán nie je k dispozícii.',
+    noPlans: 'Žiadne plány na kúpu.',
+    domainNotRegistered: (tenant) =>
+      `Táto doména nie je zaregistrovaná pre ${tenant} v Reservine › Nastavenia › Verejný profil › Domény.`,
+    loadFailed: 'Plány sa nepodarilo načítať.',
+    retry: 'Skúsiť znova'
   }
 };
 
@@ -85,7 +114,8 @@ export function resolveMembershipLocale(
 ): MembershipLocale {
   for (const candidate of [requested, pageLang, tenantLocale]) {
     const language = candidate?.trim().toLowerCase().split(/[-_]/)[0];
-    if (language === 'cs' || language === 'en') return language;
+    const supported = MEMBERSHIP_LOCALES.find((locale) => locale === language);
+    if (supported) return supported;
   }
   return 'en';
 }
