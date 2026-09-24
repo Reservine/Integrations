@@ -182,7 +182,10 @@ export interface ReservineMembershipPlan {
   description: string | null;
   price: number;
   currency_code: string;
+  /** `0` for a day-based plan, so SDKs that predate `duration_days` print no period rather than a wrong one. */
   duration_months: number;
+  /** Day-based plan period (a subscription renews every N days); null or absent for a month-based plan. */
+  duration_days?: number | null;
   kind: ReservineMembershipPlanKind;
   uses_per_voucher: number;
   usage_per: string | null;

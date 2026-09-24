@@ -6,14 +6,20 @@ export type MembershipLocale = 'cs' | 'en';
 const CS_PLURAL = (count: number, one: string, few: string, other: string): string =>
   count === 1 ? one : count >= 2 && count <= 4 ? few : other;
 
+const CS_DAYS = (count: number): string => `${count} ${CS_PLURAL(count, 'den', 'dny', 'dní')}`;
+const EN_DAYS = (count: number): string => `${count} ${count === 1 ? 'day' : 'days'}`;
+
 interface MembershipCopy {
   tag: string;
   kindSubscription: string;
   kindOneTime: string;
   perMonth: string;
+  perDays: (days: number) => string;
   oneTime: string;
   validMonths: (count: number) => string;
+  validDays: (days: number) => string;
   usesPerMonth: (count: number) => string;
+  usesPerDays: (count: number, days: number) => string;
   usesOneTime: (count: number) => string;
   cancelAnytime: string;
   buy: string;
@@ -30,10 +36,14 @@ const COPY: Record<MembershipLocale, MembershipCopy> = {
     kindSubscription: 'Předplatné',
     kindOneTime: 'Jednorázový nákup',
     perMonth: '/ měsíc',
+    perDays: (days) => (days === 1 ? '/ den' : `/ ${CS_DAYS(days)}`),
     oneTime: 'jednorázově',
     validMonths: (count) =>
       `Platí ${count} ${CS_PLURAL(count, 'měsíc', 'měsíce', 'měsíců')}`,
+    validDays: (days) => `Platí ${CS_DAYS(days)}`,
     usesPerMonth: (count) => `${count} použití měsíčně`,
+    usesPerDays: (count, days) =>
+      `${count} použití ${CS_PLURAL(days, 'denně', `každé ${CS_DAYS(days)}`, `každých ${CS_DAYS(days)}`)}`,
     usesOneTime: (count) => `${count} použití`,
     cancelAnytime: 'Zrušíte kdykoli',
     buy: 'Koupit',
@@ -49,9 +59,13 @@ const COPY: Record<MembershipLocale, MembershipCopy> = {
     kindSubscription: 'Subscription',
     kindOneTime: 'One-time purchase',
     perMonth: '/ month',
+    perDays: (days) => (days === 1 ? '/ day' : `/ ${EN_DAYS(days)}`),
     oneTime: 'one-time',
     validMonths: (count) => `Valid for ${count} ${count === 1 ? 'month' : 'months'}`,
+    validDays: (days) => `Valid for ${EN_DAYS(days)}`,
     usesPerMonth: (count) => `${count} ${count === 1 ? 'use' : 'uses'} per month`,
+    usesPerDays: (count, days) =>
+      `${count} ${count === 1 ? 'use' : 'uses'} ${days === 1 ? 'per day' : `every ${EN_DAYS(days)}`}`,
     usesOneTime: (count) => `${count} ${count === 1 ? 'use' : 'uses'}`,
     cancelAnytime: 'Cancel anytime',
     buy: 'Buy',
@@ -97,16 +111,40 @@ export function formatMembershipPrice(
   }
 }
 
+/** A day-based plan's period; null for a month-based one (older API servers omit `duration_days`). */
+const planDays = (plan: ReservineMembershipPlan): number | null => {
+  const days = plan.duration_days ?? 0;
+  return days > 0 ? days : null;
+};
+
+/** The price suffix: a subscription's billing period (month or N days), `one-time` otherwise. */
+export function membershipPriceSuffix(locale: MembershipLocale, plan: ReservineMembershipPlan): string {
+  const copy = COPY[locale];
+  if (plan.kind !== 'subscription') return copy.oneTime;
+  const days = planDays(plan);
+  return days ? copy.perDays(days) : copy.perMonth;
+}
+
 /** The fine-print rows under the seam, mirroring the FE store checklist. */
 export function membershipChecklist(locale: MembershipLocale, plan: ReservineMembershipPlan): string[] {
   const copy = COPY[locale];
   const subscription = plan.kind === 'subscription';
+  const days = planDays(plan);
   const rows: string[] = [];
 
   if (plan.uses_per_voucher > 0) {
-    rows.push(subscription ? copy.usesPerMonth(plan.uses_per_voucher) : copy.usesOneTime(plan.uses_per_voucher));
+    const uses = plan.uses_per_voucher;
+    rows.push(
+      !subscription
+        ? copy.usesOneTime(uses)
+        : days
+          ? copy.usesPerDays(uses, days)
+          : copy.usesPerMonth(uses)
+    );
   }
-  if (plan.duration_months > 0) {
+  if (days) {
+    rows.push(copy.validDays(days));
+  } else if (plan.duration_months > 0) {
     rows.push(copy.validMonths(plan.duration_months));
   }
   if (subscription) {
