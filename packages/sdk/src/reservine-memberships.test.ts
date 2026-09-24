@@ -418,6 +418,27 @@ describe('<reservine-memberships>', () => {
     expect(priceSuffix(en, 32)).toBe('/ day');
   });
 
+  it('renders Slovak copy with deň / dni / dní and použitie / použitia / použití plurals', async () => {
+    fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({ data: DAY_DTO })));
+
+    // A Slovak page (lang="sk-SK") with no explicit locale follows the page language.
+    document.documentElement.lang = 'sk-SK';
+    const sk = await mountElement({ partner: 'fitflow' });
+    document.documentElement.lang = '';
+
+    expect(checklist(sk, 31)).toEqual([
+      '8 použití každých 14 dní',
+      'Platí 14 dní',
+      'Zrušíte kedykoľvek'
+    ]);
+    expect(checklist(sk, 32)).toContain('2 použitia denne');
+    expect(checklist(sk, 33)).toContain('5 použití každé 3 dni');
+    expect(checklist(sk, 34)).toEqual(['10 použití', 'Platí 10 dní']);
+    expect(priceSuffix(sk, 32)).toBe('/ deň');
+    expect(priceSuffix(sk, 34)).toBe('jednorazovo');
+    expect(shadow(sk).querySelector('.rm-buy')?.textContent?.trim()).toBe('Kúpiť');
+  });
+
   it('shows the domain-registration hint on 403 domain_not_registered', async () => {
     fetchMock.mockImplementation(() =>
       Promise.resolve(

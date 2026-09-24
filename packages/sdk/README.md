@@ -83,7 +83,7 @@ Configuration, shared by every adapter:
 | `partner` | Tenant slug (required). |
 | `plan` | Render only this plan's card (a single-plan call to action). |
 | `branch` | Scope plans to a branch; omitted = default branch + tenant-wide plans. |
-| `locale` | `cs` or `en`; defaults to the page language, then the tenant locale. |
+| `locale` | `cs`, `en` or `sk`; defaults to the page language, then the tenant locale. |
 | `theme` | `light`, `dark`, or `auto` (follows `prefers-color-scheme`). Cards inherit the tenant's Reservine palette by default. |
 | `primary`, `radius`, `font` | Host overrides: brand hex, corner radius, font family (`inherit` adopts the page font). Forwarded into the checkout. |
 | `successUrl` | After a successful purchase, close the checkout and navigate the top window here. Without it the success view stays open. |
@@ -93,6 +93,8 @@ Configuration, shared by every adapter:
 Every adapter emits `openChange` (checkout opened/closed) and `purchased` with `{ orderId, planId }`; the plain element dispatches the same as the DOM events `reservine-open-change` and `reservine-membership-purchased`. For fine-grained styling set `--reservine-*` custom properties on the element; they win over both the tenant palette and the props.
 
 Day-based plans (a 14-day pass) show their period in days since SDK 1.2.0: "Valid for 14 days", and a day subscription prices and counts uses per period ("/ 14 days", "8 uses every 14 days"). Earlier SDKs omit the validity row for day plans and still price a day subscription per month.
+
+Slovak card copy (`locale="sk"`, or a page with `lang="sk-SK"`) ships since SDK 1.3.0: "Platí 14 dní", "8 použití každých 14 dní", "Kúpiť". Earlier SDKs render a Slovak page in the tenant language, or English.
 
 While plans load, the element shows one row of card-sized placeholders, `22.54125rem` tall. Reserve that height before the SDK script runs so the page never shifts:
 
