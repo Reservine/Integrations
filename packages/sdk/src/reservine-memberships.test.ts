@@ -68,7 +68,7 @@ const nbsp = (value: string | null | undefined) => (value ?? '').replace(/[  
 const shadow = (element: HTMLElement) => element.shadowRoot as ShadowRoot;
 
 const checklist = (element: HTMLElement, planId: number) =>
-  Array.from(shadow(element).querySelectorAll(`[data-plan-id="${planId}"] .rm-list li`), (row) =>
+  Array.from(shadow(element).querySelectorAll(`[data-plan-id="${planId}"] .rm-facts li`), (row) =>
     row.textContent?.trim()
   );
 
@@ -357,7 +357,7 @@ describe('<reservine-memberships>', () => {
     );
     expect(nbsp(csCard.querySelector('.rm-amount')?.textContent)).toBe('1 490 Kč');
     expect(csCard.querySelector('.rm-suffix')?.textContent?.trim()).toBe('/ měsíc');
-    expect(csCard.querySelector('.rm-kind')?.textContent?.trim()).toBe('Předplatné');
+    expect(csCard.querySelector('.rm-eyebrow')?.textContent?.trim()).toBe('Předplatné');
     expect(csCard.textContent).toContain('Platí 12 měsíců');
     expect(csCard.querySelector('.rm-buy')?.textContent?.trim()).toBe('Koupit');
 
@@ -510,5 +510,102 @@ describe('<reservine-memberships>', () => {
     await flush();
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(shadow(first).querySelectorAll('.rm-card')).toHaveLength(2);
+  });
+
+  it('draws each plan in its finish: the accent tints classic and silver, only gold loops a glare', async () => {
+    const pro = DTO.plans[0];
+    const plans: ReservineMembershipsData['plans'] = [
+      { ...pro, id: 1, finish: 'classic', accent: 'emerald', eyebrow: 'Nejoblíbenější' },
+      { ...pro, id: 2, finish: 'classic', accent: 'amber' },
+      { ...pro, id: 3, finish: 'silver', accent: 'rose' },
+      { ...pro, id: 4, finish: 'black', accent: null },
+      { ...pro, id: 5, finish: 'gold', accent: 'sky' }
+    ];
+    fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({ data: { ...DTO, plans } })));
+    const element = await mountElement({ partner: 'fitflow' });
+    const card = (id: number) => shadow(element).querySelector(`[data-plan-id="${id}"]`) as HTMLElement;
+
+    expect(card(1).className).toContain('rm-finish-classic');
+    expect(card(1).getAttribute('style')).toBe('--rm-accent: oklch(0.6 0.14 160)');
+    expect(card(1).querySelector('.rm-eyebrow')?.textContent?.trim()).toBe('Nejoblíbenější');
+    expect(card(2).className).toContain('rm-ink-dark');
+    expect(card(3).className).toContain('rm-finish-silver');
+    expect(card(3).getAttribute('style')).toBe('--rm-tint: oklch(0.6 0.19 10)');
+    expect(card(4).className).toContain('rm-finish-black');
+    expect(card(5).className).toContain('rm-finish-gold');
+    expect(card(5).getAttribute('style') ?? '').toBe('');
+    expect([1, 3, 4, 5].map((id) => card(id).className.includes('rm-metal'))).toEqual([false, true, true, true]);
+    expect(shadow(element).querySelectorAll('.rm-glare')).toHaveLength(1);
+    expect(card(5).querySelector('.rm-glare')).not.toBeNull();
+  });
+
+  it('renders a plan sold both ways as one card whose switch sends billing=purchase to the checkout', async () => {
+    const dual = { ...DTO.plans[0], one_time_available: true };
+    fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({ data: { ...DTO, plans: [dual] } })));
+    const element = await mountElement({ partner: 'fitflow', locale: 'sk' });
+
+    expect(shadow(element).querySelectorAll('.rm-card')).toHaveLength(1);
+    const [subscription, once] = Array.from(
+      shadow(element).querySelectorAll<HTMLButtonElement>('[data-plan-id="12"] .rm-switch button')
+    );
+    expect([subscription.textContent?.trim(), once.textContent?.trim()]).toEqual(['Predplatné', 'Jednorazovo']);
+    expect(subscription.getAttribute('aria-pressed')).toBe('true');
+    expect(priceSuffix(element, 12)).toBe('/ mesiac');
+
+    once.click();
+    await flush();
+    expect(once.getAttribute('aria-pressed')).toBe('true');
+    expect(priceSuffix(element, 12)).toBe('jednorazovo');
+    expect(checklist(element, 12)).not.toContain('Zrušíte kedykoľvek');
+
+    shadow(element).querySelector<HTMLButtonElement>('[data-plan-buy="12"]')?.click();
+    await flush();
+    expect(iframeSrc().searchParams.get('billing')).toBe('purchase');
+  });
+
+  it('shelves grouped plans in group order behind filter chips, ungrouped last; no groups, no chips', async () => {
+    const groups = [
+      { id: 2, name: 'Kurzy', sort_order: 0, branch_id: null },
+      { id: 1, name: 'Posilovna', sort_order: 1, branch_id: null }
+    ];
+    const plans = [
+      { ...DTO.plans[0], id: 1, group_id: 1 },
+      { ...DTO.plans[0], id: 2, group_id: null },
+      { ...DTO.plans[0], id: 3, group_id: 2 }
+    ];
+    fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({ data: { ...DTO, groups, plans } })));
+    const element = await mountElement({ partner: 'fitflow', locale: 'en' });
+    const texts = (selector: string) =>
+      Array.from(shadow(element).querySelectorAll(selector), (node) => node.textContent?.trim());
+    const planIds = () =>
+      Array.from(shadow(element).querySelectorAll('.rm-card'), (node) => node.getAttribute('data-plan-id'));
+
+    expect(texts('.rm-chip')).toEqual(['All', 'Kurzy', 'Posilovna', 'More plans']);
+    expect(texts('.rm-shelf-title')).toEqual(['Kurzy', 'Posilovna', 'More plans']);
+    expect(planIds()).toEqual(['3', '1', '2']);
+
+    shadow(element).querySelector<HTMLButtonElement>('[data-shelf-filter="group-1"]')?.click();
+    await flush();
+    expect(planIds()).toEqual(['1']);
+
+    fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({ data: DTO })));
+    const plain = await mountElement({ partner: 'fitflow' });
+    expect(shadow(plain).querySelector('.rm-chips, .rm-shelf-title')).toBeNull();
+    expect(shadow(plain).querySelectorAll('.rm-card')).toHaveLength(2);
+  });
+
+  it('renders an older API payload (no finish, accent, eyebrow or groups) as classic tenant-colour cards', async () => {
+    const element = await mountElement({ partner: 'fitflow', locale: 'en' });
+    const cards = Array.from(shadow(element).querySelectorAll<HTMLElement>('.rm-card'));
+
+    expect(cards.map((card) => card.getAttribute('data-plan-finish'))).toEqual(['classic', 'classic']);
+    expect(cards[0].getAttribute('style')).toBe('--rm-accent: var(--reservine-primary, var(--rm-primary))');
+    expect(cards[0].querySelector('.rm-eyebrow')?.textContent?.trim()).toBe('Subscription');
+    expect(cards[1].querySelector('.rm-once')?.textContent?.trim()).toBe('One-time');
+    expect(shadow(element).querySelector('.rm-glare, .rm-switch, .rm-chips')).toBeNull();
+
+    shadow(element).querySelector<HTMLButtonElement>('[data-plan-buy="7"]')?.click();
+    await flush();
+    expect(iframeSrc().searchParams.get('billing')).toBe('purchase');
   });
 });

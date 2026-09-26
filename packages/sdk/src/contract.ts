@@ -174,6 +174,30 @@ export interface ReservineMembershipsData {
   theme: { light: Record<string, string>; dark: Record<string, string> } | null;
   branches: { id: number; name: string }[];
   plans: ReservineMembershipPlan[];
+  /** Store sections holding at least one listed plan, in store order; absent from older API servers. */
+  groups?: ReservineMembershipGroup[];
+}
+
+/** The card material — it IS the tier, no tier word is printed. */
+export type ReservineMembershipFinish = 'classic' | 'silver' | 'black' | 'gold';
+/** Curated accent swatch: tints classic plastic and anodises silver; gold ignores it. */
+export type ReservineMembershipAccent =
+  | 'emerald'
+  | 'teal'
+  | 'sky'
+  | 'indigo'
+  | 'violet'
+  | 'rose'
+  | 'amber'
+  | 'slate';
+
+/** A store section plans are listed under (`plan.group_id`). */
+export interface ReservineMembershipGroup {
+  id: number;
+  name: string;
+  sort_order: number;
+  /** Null for a tenant-wide group. */
+  branch_id: number | null;
 }
 
 export interface ReservineMembershipPlan {
@@ -186,10 +210,21 @@ export interface ReservineMembershipPlan {
   duration_months: number;
   /** Day-based plan period (a subscription renews every N days); null or absent for a month-based plan. */
   duration_days?: number | null;
+  /** A plan sold both ways arrives once, as `subscription`, with `one_time_available: true`. */
   kind: ReservineMembershipPlanKind;
+  /** The plan can also be bought once; absent (older API servers) = sold only as `kind`. */
+  one_time_available?: boolean;
   uses_per_voucher: number;
   usage_per: string | null;
   branch_id: number | null;
+  /** Card material; absent = `classic`. */
+  finish?: ReservineMembershipFinish;
+  /** Card accent; null or absent = the tenant primary colour. */
+  accent?: ReservineMembershipAccent | null;
+  /** Short uppercase line above the plan name; empty = the billing kind label. */
+  eyebrow?: string | null;
+  /** The `groups[].id` the plan is listed under; null or absent = ungrouped. */
+  group_id?: number | null;
 }
 
 export const reservineMembershipsDefaults = {
