@@ -98,10 +98,10 @@ Slovak card copy (`locale="sk"`, or a page with `lang="sk-SK"`) ships since SDK 
 
 Since SDK 1.4.0 each plan is a wallet-pass card in the material the tenant picked for it (classic plastic in the brand or an accent colour, brushed silver, black metal or gold; gold loops a slow glare, static under `prefers-reduced-motion`), with the tenant's short eyebrow line and the full description. A plan sold both as a subscription and as a one-time purchase is one card with a Subscription · One-time switch, and Buy opens the checkout on the picked billing. When the tenant sorts plans into groups, filter chips and headed shelves list them in the tenant's order, ungrouped plans last. Older API servers that do not send these fields get classic, ungrouped cards.
 
-While plans load, the element shows one row of card-sized placeholders, `16.34375rem` tall. Reserve that height before the SDK script runs so the page never shifts:
+While plans load, the element shows one row of card-sized placeholders, `16.3125rem` tall. Reserve that height before the SDK script runs so the page never shifts:
 
 ```css
-reservine-memberships:not(:defined) { display: block; min-height: 16.34375rem; }
+reservine-memberships:not(:defined) { display: block; min-height: 16.3125rem; }
 ```
 
 ### React
