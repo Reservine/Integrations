@@ -550,6 +550,13 @@ describe('<reservine-memberships>', () => {
     expect(await inkDark('light')).toEqual([false, false]); // #2563eb
   });
 
+  it('inks by a host CSS --reservine-primary over the prop and theme primary', async () => {
+    const element = await mountElement({ partner: 'fitflow', theme: 'light', style: '--reservine-primary: #93c5fd' });
+    const cards = Array.from(shadow(element).querySelectorAll('.rm-card'));
+
+    expect(cards.map((card) => card.classList.contains('rm-ink-dark'))).toEqual([true, true]);
+  });
+
   it('renders a plan sold both ways as one card whose switch sends billing=purchase to the checkout', async () => {
     const dual = { ...DTO.plans[0], one_time_available: true };
     fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({ data: { ...DTO, plans: [dual] } })));

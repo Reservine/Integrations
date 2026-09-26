@@ -22,6 +22,8 @@
    * `reservine-membership-purchased` DOM event; `successUrl` turns STAY into
    * REDIRECT (D5).
    */
+  import { afterUpdate } from 'svelte';
+
   import PurchaseShell from './purchase-shell.svelte';
   import type {
     ReservineMembershipPlanKind,
@@ -208,8 +210,11 @@
 
   $: primaryHex = normalizeHex(primary);
   $: tokens = { ...NEUTRAL[mode], ...(data?.theme?.[mode] ?? {}) };
+  /** A host's CSS `--reservine-primary` (hex) wins over the prop and theme, as it does in the card gradient. */
+  let hostPrimary = '';
   /** The primary accent-less classic cards are cut from; their ink follows its contrast. */
-  $: cardPrimary = primaryHex || normalizeHex(token(tokens, 'primary', NEUTRAL[mode].primary));
+  $: cardPrimary =
+    hostPrimary || primaryHex || normalizeHex(token(tokens, 'primary', NEUTRAL[mode].primary));
   $: cssVars = [
     `--rm-primary: ${primaryHex || token(tokens, 'primary', NEUTRAL[mode].primary)}`,
     `--rm-primary-content: ${primaryHex ? contrastColor(primaryHex) : token(tokens, 'primary-content', NEUTRAL[mode]['primary-content'])}`,
@@ -260,6 +265,13 @@
     const node = root?.getRootNode();
     return node instanceof ShadowRoot ? node.host as HTMLElement : null;
   };
+
+  // Re-read after every render; an unchanged value is a no-op, so this never loops.
+  afterUpdate(() => {
+    const host = hostElement();
+    if (!host || typeof getComputedStyle !== 'function') return;
+    hostPrimary = normalizeHex(getComputedStyle(host).getPropertyValue('--reservine-primary'));
+  });
 
   const emit = (type: string, detail: unknown): void => {
     hostElement()?.dispatchEvent(new CustomEvent(type, { detail, bubbles: true, composed: true }));
