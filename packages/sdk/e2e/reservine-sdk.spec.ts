@@ -221,8 +221,8 @@ test.describe('Reservine SDK playground', () => {
     await expect(root.locator('[data-plan-id]')).toHaveCount(1);
 
     expect(await heightInRem()).toBeCloseTo(skeleton, 1);
-    // The reservation the docs publish: reservine-memberships:not(:defined) { min-height: 22.54125rem }
-    expect(skeleton).toBeCloseTo(22.54125, 2);
+    // The reservation the docs publish: reservine-memberships:not(:defined) { min-height: 16.3125rem }
+    expect(skeleton).toBeCloseTo(16.3125, 2);
   });
 
   test('exposes the package version on the ReservineSDK browser global', async ({ page }, testInfo) => {

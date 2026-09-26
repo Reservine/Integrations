@@ -1,5 +1,7 @@
 export const IntegrationConstants = {
   adjustedFontSize: 'adjustedFontSize',
+  /** Billing picked on a membership card (`subscription` | `purchase`), honoured by the embed route. */
+  billing: 'billing',
   baseFontSize: 16,
   employee: 'employee',
   promo: 'promo',

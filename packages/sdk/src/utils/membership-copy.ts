@@ -28,6 +28,12 @@ interface MembershipCopy {
   usesPerDays: (count: number, days: number) => string;
   usesOneTime: (count: number) => string;
   cancelAnytime: string;
+  billingLabel: string;
+  billingSubscription: string;
+  billingOnce: string;
+  groupsLabel: string;
+  groupAll: string;
+  groupOther: string;
   buy: string;
   planNotFound: string;
   noPlans: string;
@@ -52,6 +58,12 @@ const COPY: Record<MembershipLocale, MembershipCopy> = {
       `${count} použití ${CS_PLURAL(days, 'denně', `každé ${CS_DAYS(days)}`, `každých ${CS_DAYS(days)}`)}`,
     usesOneTime: (count) => `${count} použití`,
     cancelAnytime: 'Zrušíte kdykoli',
+    billingLabel: 'Způsob platby',
+    billingSubscription: 'Předplatné',
+    billingOnce: 'Jednorázově',
+    groupsLabel: 'Skupiny členství',
+    groupAll: 'Vše',
+    groupOther: 'Další',
     buy: 'Koupit',
     planNotFound: 'Tento plán není k dispozici.',
     noPlans: 'Žádné plány k zakoupení.',
@@ -74,6 +86,12 @@ const COPY: Record<MembershipLocale, MembershipCopy> = {
       `${count} ${count === 1 ? 'use' : 'uses'} ${days === 1 ? 'per day' : `every ${EN_DAYS(days)}`}`,
     usesOneTime: (count) => `${count} ${count === 1 ? 'use' : 'uses'}`,
     cancelAnytime: 'Cancel anytime',
+    billingLabel: 'Billing',
+    billingSubscription: 'Subscription',
+    billingOnce: 'One-time',
+    groupsLabel: 'Membership groups',
+    groupAll: 'All',
+    groupOther: 'More plans',
     buy: 'Buy',
     planNotFound: 'This plan is not available.',
     noPlans: 'No plans available for purchase.',
@@ -97,6 +115,12 @@ const COPY: Record<MembershipLocale, MembershipCopy> = {
       `${SK_USES(count)} ${CS_PLURAL(days, 'denne', `každé ${SK_DAYS(days)}`, `každých ${SK_DAYS(days)}`)}`,
     usesOneTime: (count) => SK_USES(count),
     cancelAnytime: 'Zrušíte kedykoľvek',
+    billingLabel: 'Spôsob platby',
+    billingSubscription: 'Predplatné',
+    billingOnce: 'Jednorazovo',
+    groupsLabel: 'Skupiny členstiev',
+    groupAll: 'Všetko',
+    groupOther: 'Ďalšie',
     buy: 'Kúpiť',
     planNotFound: 'Tento plán nie je k dispozícii.',
     noPlans: 'Žiadne plány na kúpu.',
