@@ -539,6 +539,17 @@ describe('<reservine-memberships>', () => {
     expect(card(5).querySelector('.rm-glare')).not.toBeNull();
   });
 
+  it('inks an accent-less classic card by the tenant primary: dark on a light primary, light on a dark one', async () => {
+    const inkDark = async (theme: 'light' | 'dark') =>
+      Array.from(
+        shadow(await mountElement({ partner: 'fitflow', theme })).querySelectorAll('.rm-card'),
+        (card) => card.classList.contains('rm-ink-dark')
+      );
+
+    expect(await inkDark('dark')).toEqual([true, true]); // #93c5fd
+    expect(await inkDark('light')).toEqual([false, false]); // #2563eb
+  });
+
   it('renders a plan sold both ways as one card whose switch sends billing=purchase to the checkout', async () => {
     const dual = { ...DTO.plans[0], one_time_available: true };
     fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({ data: { ...DTO, plans: [dual] } })));

@@ -38,9 +38,21 @@ const ACCENT_SWATCHES: Record<ReservineMembershipAccent, { color: string; darkIn
 /** Without a swatch, classic plastic is the tenant's own primary. */
 const TENANT_ACCENT = 'var(--reservine-primary, var(--rm-primary))';
 
+/**
+ * The widget's one on-primary rule (YIQ brightness over 128 → dark ink), shared by
+ * `--rm-primary-content` and tenant-primary card ink. Anything but `#rrggbb` inks light.
+ */
+export const prefersDarkInk = (hex: string): boolean => {
+  if (!/^#[0-9a-f]{6}$/i.test(hex)) return false;
+  const r = parseInt(hex.substring(1, 3), 16);
+  const g = parseInt(hex.substring(3, 5), 16);
+  const b = parseInt(hex.substring(5, 7), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000 > 128;
+};
+
 export interface MembershipCardMaterial {
   finish: ReservineMembershipFinish;
-  /** Classic plastic under a light swatch (amber) inks dark. */
+  /** Classic plastic under a light swatch (amber) or a light tenant primary inks dark. */
   darkInk: boolean;
   /** Only gold loops its glare. */
   glare: boolean;
@@ -50,7 +62,8 @@ export interface MembershipCardMaterial {
   style: string;
 }
 
-export function membershipCardMaterial(plan: ReservineMembershipPlan): MembershipCardMaterial {
+/** `primary` is the resolved tenant primary (`#rrggbb`) an accent-less classic card is cut from. */
+export function membershipCardMaterial(plan: ReservineMembershipPlan, primary = ''): MembershipCardMaterial {
   // Values a newer API may add fall back to the defaults instead of an unstyled card.
   const finish = FINISHES.find((value) => value === plan.finish) ?? 'classic';
   const swatch =
@@ -60,7 +73,7 @@ export function membershipCardMaterial(plan: ReservineMembershipPlan): Membershi
     case 'classic':
       return {
         finish,
-        darkInk: swatch?.darkInk ?? false,
+        darkInk: swatch ? swatch.darkInk : prefersDarkInk(primary),
         glare: false,
         metal: false,
         style: `--rm-accent: ${swatch?.color ?? TENANT_ACCENT}`

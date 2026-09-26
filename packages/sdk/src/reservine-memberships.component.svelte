@@ -44,6 +44,7 @@
     membershipCardMaterial,
     membershipCards,
     membershipShelves,
+    prefersDarkInk,
     type MembershipBilling,
     type MembershipCard
   } from './utils/membership-card.js';
@@ -200,19 +201,15 @@
     return hex.length === 3 ? `#${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}` : `#${hex}`;
   };
 
-  const contrastColor = (hex: string): string => {
-    const value = hex.replace('#', '');
-    const r = parseInt(value.substring(0, 2), 16);
-    const g = parseInt(value.substring(2, 4), 16);
-    const b = parseInt(value.substring(4, 6), 16);
-    return (r * 299 + g * 587 + b * 114) / 1000 > 128 ? '#000000' : '#ffffff';
-  };
+  const contrastColor = (hex: string): string => (prefersDarkInk(hex) ? '#000000' : '#ffffff');
 
   const token = (tokens: Record<string, string> | undefined, key: string, fallback: string): string =>
     tokens?.[key] || fallback;
 
   $: primaryHex = normalizeHex(primary);
   $: tokens = { ...NEUTRAL[mode], ...(data?.theme?.[mode] ?? {}) };
+  /** The primary accent-less classic cards are cut from; their ink follows its contrast. */
+  $: cardPrimary = primaryHex || normalizeHex(token(tokens, 'primary', NEUTRAL[mode].primary));
   $: cssVars = [
     `--rm-primary: ${primaryHex || token(tokens, 'primary', NEUTRAL[mode].primary)}`,
     `--rm-primary-content: ${primaryHex ? contrastColor(primaryHex) : token(tokens, 'primary-content', NEUTRAL[mode]['primary-content'])}`,
@@ -741,7 +738,7 @@
           {#each shelf.cards as card (card.plan.id)}
             {@const kind = cardKind(card, billingChoice)}
             {@const sold = { ...card.plan, kind }}
-            {@const material = membershipCardMaterial(card.plan)}
+            {@const material = membershipCardMaterial(card.plan, cardPrimary)}
             <article
               class="rm-card rm-finish-{material.finish}"
               class:rm-metal={material.metal}
