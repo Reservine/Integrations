@@ -9,7 +9,7 @@ bun run check
 bun run test
 bun run build
 bun run test:packages
-devbox test
+devbox run test
 ```
 
 ## Shared SDK architecture

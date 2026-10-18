@@ -22,7 +22,7 @@ bun run test:packages
 bun run dev
 ```
 
-The playground runs on port 3333 locally. Project-level verification runs in the VM-backed Devbox with `devbox test`.
+The playground runs on port 3333 locally. Project-level verification runs in the VM-backed Devbox with `devbox run test`.
 
 ## Browser installation
 
