@@ -6,11 +6,11 @@ checkouts:
   sdk:
     from: .
     sync_ignores: [".env", ".env.*", ".worktrees", "node_modules", "dist", "cdk.out"]
-    provision: ['mise x bun@1.3.14 -- bun install --frozen-lockfile', 'mise x bun@1.3.14 -- bunx playwright install chromium']
+    provision: ['mise x bun@1.4.3 -- bun install --frozen-lockfile', 'mise x bun@1.4.3 -- bunx playwright install chromium']
 apps:
   sdk:
-    cmd: 'mise x bun@1.3.14 -- bun run --cwd packages/sdk dev -- --host ${BIND_HOST:-127.0.0.1} --port {port:web}'
+    cmd: 'mise x bun@1.4.3 -- bun run --cwd packages/sdk dev -- --host ${BIND_HOST:-127.0.0.1} --port {port:web}'
     ports: [web]
     ready: none
 scripts:
-  test: {cmd: ['mise x bun@1.3.14 -- bun run release:verify && mise x bun@1.3.14 -- bun run --cwd infra check && mise x bun@1.3.14 -- bun run --cwd infra test && mise x bun@1.3.14 -- bun run --cwd infra cdk synth --quiet'], needs: stack}
+  test: {cmd: ['mise x bun@1.4.3 -- bun run release:verify && mise x bun@1.4.3 -- bun run --cwd infra check && mise x bun@1.4.3 -- bun run --cwd infra test && mise x bun@1.4.3 -- bun run --cwd infra cdk synth --quiet'], needs: stack}
