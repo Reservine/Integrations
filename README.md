@@ -2,6 +2,10 @@
 
 This repository owns the public `@reservine/sdk` package, its framework adapters, the browser CDN artifact, and the AWS infrastructure that distributes it.
 
+It is for developers of websites that embed Reservine booking (`<reservine-button>`) and membership checkout (`<reservine-memberships>`), in plain HTML or through the React, Vue, Svelte and Angular adapters. Existing `reservine-button` installations are served by the compatibility package; new integrations use `@reservine/sdk`.
+
+Production releases currently publish only the browser bundle at `cdn.reservine.io`. npm publishing is deliberately deferred; the package and its adapters stay release-ready in this repository (`docs/releasing.md`).
+
 ## Architecture
 
 - `packages/sdk` — framework-neutral contract, the Svelte custom elements (`reservine-button`, `reservine-memberships`) and React/Vue/Svelte/Angular adapters
@@ -16,13 +20,17 @@ This repository owns the public `@reservine/sdk` package, its framework adapters
 ```text
 bun install
 bun run check
-bun run test
 bun run build
 bun run test:packages
-bun run dev
 ```
 
-The playground runs on port 3333 locally. Project-level verification runs in the VM-backed Devbox with `devbox run test`.
+Test suites and the dev server run in the VM-backed Devbox; `devbox.yaml` is the canonical topology:
+
+```text
+devbox run test   # project-level verification: bun run release:verify, then the infra check, test and cdk synth
+devbox up         # starts the sdk playground app
+devbox url        # prints its address
+```
 
 ## Browser installation
 
@@ -33,4 +41,4 @@ The compatible major channel updates automatically without crossing breaking SDK
 <reservine-button partner="mytimegym" text="Book now"></reservine-button>
 ```
 
-See `packages/sdk/README.md` for framework usage and `docs/releasing.md` for provisioning, release, migration, and rollback operations.
+See `packages/sdk/README.md` for framework usage, `docs/releasing.md` for provisioning, release, migration, and rollback operations, and `infra/README.md` for the AWS stack.
