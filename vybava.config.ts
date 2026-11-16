@@ -1,8 +1,8 @@
-import { defineConfig } from './.vybava/config';
+import { defineConfig } from '@vybava/config';
 
 // Shared Výbava configuration for this repository — one section per applet.
-// Evaluated by bun with the helpers vybava ships; .vybava/config.ts is their
-// gitignored copy for editor types, written by `vybava config init`.
+// vybava evaluates it with the helpers it ships; editors read their types from
+// ~/node_modules/@vybava/config, which vybava keeps current.
 export default defineConfig({
   sync: {
     // vybava config setup: bun.lock is bun's lockfile
