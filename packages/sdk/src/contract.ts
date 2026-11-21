@@ -228,7 +228,7 @@ export interface ReservineMembershipPlan {
 }
 
 export const reservineMembershipsDefaults = {
-  apiUrl: 'https://api.reservine.io',
+  apiUrl: 'https://api.reservine.me',
   branch: null,
   buyText: '',
   font: '',

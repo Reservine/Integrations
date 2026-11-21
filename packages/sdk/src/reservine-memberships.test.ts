@@ -134,7 +134,7 @@ describe('<reservine-memberships>', () => {
     const element = await mountElement({ partner: 'fitflow' });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://api.reservine.io/api/widget/fitflow/memberships',
+      'https://api.reservine.me/api/widget/fitflow/memberships',
       expect.objectContaining({ credentials: 'omit' })
     );
     const cards = shadow(element).querySelectorAll('.rm-card');
@@ -462,8 +462,8 @@ describe('<reservine-memberships>', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual(
       expect.arrayContaining([
-        'https://api.reservine.io/api/widget/fitflow/memberships?branch=3',
-        'https://api.reservine.io/api/widget/fitflow/memberships'
+        'https://api.reservine.me/api/widget/fitflow/memberships?branch=3',
+        'https://api.reservine.me/api/widget/fitflow/memberships'
       ])
     );
     expect(shadow(grid).querySelectorAll('.rm-card')).toHaveLength(2);

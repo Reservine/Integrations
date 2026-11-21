@@ -54,7 +54,7 @@
   import { fetchWidgetData } from './utils/widget-request.js';
 
   export let partner: string = '';
-  export let apiUrl: string = 'https://api.reservine.io';
+  export let apiUrl: string = 'https://api.reservine.me';
   export let branch: number | null = null;
   export let plan: number | null = null;
   export let locale: string = '';

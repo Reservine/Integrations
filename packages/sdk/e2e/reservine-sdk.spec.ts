@@ -198,7 +198,7 @@ test.describe('Reservine SDK playground', () => {
     const released = new Promise<void>((resolve) => {
       release = resolve;
     });
-    await page.route('https://api.reservine.io/api/widget/skeleton-check/memberships', async (route) => {
+    await page.route('https://api.reservine.me/api/widget/skeleton-check/memberships', async (route) => {
       await released;
       await route.fulfill({ headers: { 'access-control-allow-origin': '*' }, json: { data: typicalPlan } });
     });
