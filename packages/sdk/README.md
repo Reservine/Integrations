@@ -92,6 +92,8 @@ Configuration, shared by every adapter:
 
 Every adapter emits `openChange` (checkout opened/closed) and `purchased` with `{ orderId, planId }`; the plain element dispatches the same as the DOM events `reservine-open-change` and `reservine-membership-purchased`. For fine-grained styling set `--reservine-*` custom properties on the element; they win over both the tenant palette and the props.
 
+Since SDK 1.5.0 the checkout can close itself: after a purchase its own Close button asks the host and the modal or drawer closes, firing the same open-change event. Nothing to configure.
+
 Day-based plans (a 14-day pass) show their period in days since SDK 1.2.0: "Valid for 14 days", and a day subscription prices and counts uses per period ("/ 14 days", "8 uses every 14 days"). Earlier SDKs omit the validity row for day plans and still price a day subscription per month.
 
 Slovak card copy (`locale="sk"`, or a page with `lang="sk-SK"`) ships since SDK 1.3.0: "Platí 14 dní", "8 použití každých 14 dní", "Kúpiť". Earlier SDKs render a Slovak page in the tenant language, or English.

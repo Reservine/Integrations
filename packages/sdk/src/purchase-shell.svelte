@@ -109,6 +109,13 @@
       return;
     }
 
+    // The embedded app has its own "Close" action (after a purchase): it cannot reach the
+    // host's modal or drawer, so it asks and the shell closes exactly as its own control does.
+    if (message.type === IntegrationConstants.reservineClose) {
+      close();
+      return;
+    }
+
     onMessage?.(message);
   };
 
@@ -121,7 +128,11 @@
     orderId: number;
     planId: number;
   };
-  type ReservineMessage = ReservineNavigationMessage | ReservineMembershipPurchasedMessage;
+  type ReservineCloseMessage = { type: typeof IntegrationConstants.reservineClose };
+  type ReservineMessage =
+    | ReservineNavigationMessage
+    | ReservineMembershipPurchasedMessage
+    | ReservineCloseMessage;
 
   const isPlainObject = (value: unknown): value is Record<string, unknown> =>
     typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -144,6 +155,8 @@
     if (type === IntegrationConstants.reservineNavigation) {
       return typeof value.route === 'string' ? { type, route: value.route } : null;
     }
+
+    if (type === IntegrationConstants.reservineClose) return { type };
 
     if (type === IntegrationConstants.reservineMembershipPurchased) {
       const orderId = finiteNumber(value.orderId);

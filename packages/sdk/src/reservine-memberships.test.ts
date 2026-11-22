@@ -230,6 +230,26 @@ describe('<reservine-memberships>', () => {
     expect(navigateTopWindow).not.toHaveBeenCalled();
   });
 
+  it('tells the checkout it can close and closes when the checkout asks from its own origin', async () => {
+    const element = await mountElement({ partner: 'fitflow' });
+    const changes: unknown[] = [];
+    element.addEventListener('reservine-open-change', (event) => changes.push((event as CustomEvent).detail));
+
+    element.open(12);
+    await flush();
+    expect(iframeSrc().searchParams.get('reservine-can-close')).toBe('1');
+    const origin = iframeSrc().origin;
+
+    window.dispatchEvent(new MessageEvent('message', { origin: 'https://evil.example', data: { type: 'reservine-close' } }));
+    await flush();
+    expect(element.opened).toBe(true);
+
+    window.dispatchEvent(new MessageEvent('message', { origin, data: { type: 'reservine-close' } }));
+    await flush();
+    expect(element.opened).toBe(false);
+    expect(changes).toEqual([{ open: true }, { open: false }]);
+  });
+
   it('closes the checkout and navigates the top window when successUrl is set', async () => {
     const element = await mountElement({
       partner: 'fitflow',

@@ -7,6 +7,10 @@ export const IntegrationConstants = {
   promo: 'promo',
   reservineNavigation: 'reservine-navigation',
   reservineMembershipPurchased: 'reservine-membership-purchased',
+  /** Posted by the embedded app to ask the host to close the modal/drawer (SDK 1.5+). */
+  reservineClose: 'reservine-close',
+  /** Query flag the SDK adds to the iframe url: this host closes on `reservine-close`. */
+  reservineCanClose: 'reservine-can-close',
   reservinePrimary: 'reservine-primary',
   reservineHost: 'reservine-host',
   reservineTheme: 'reservine-theme',

@@ -249,6 +249,8 @@
     url.searchParams.set(IntegrationConstants.reservineTheme, mode);
     if (primaryHex) url.searchParams.set(IntegrationConstants.reservinePrimary, primaryHex.slice(1));
     if (selectedBilling) url.searchParams.set(IntegrationConstants.billing, selectedBilling);
+    // Tells the checkout this host closes on `reservine-close`, so it may offer its own Close.
+    url.searchParams.set(IntegrationConstants.reservineCanClose, '1');
     // The embed page posts the purchase back to this origin when the host's
     // Referrer-Policy strips document.referrer.
     if (typeof window !== 'undefined') {
