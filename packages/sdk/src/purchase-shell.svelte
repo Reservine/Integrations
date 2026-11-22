@@ -55,6 +55,8 @@
   let useModal = false;
   let modalContentRef: { getContentElement(): Element | null } | undefined;
   let iframeElement: HTMLIFrameElement | undefined;
+  /** The drawer's iframe (the modal's is `iframeElement`, mounted outside the shadow DOM). */
+  let drawerIframe: HTMLIFrameElement | undefined;
 
   const mountModalIframe = (slotContent: Element): void => {
     if (!iframeElement) {
@@ -109,6 +111,16 @@
       return;
     }
 
+    // The embedded app has its own "Close" action (after a purchase): it cannot reach the
+    // host's modal or drawer, so it asks and the shell closes exactly as its own control does.
+    // Only this shell's own frame may ask: another same-origin Reservine frame on the page (a
+    // second widget, the booking button) must not close a window it does not sit in.
+    if (message.type === IntegrationConstants.reservineClose) {
+      const frame = useModal ? iframeElement : drawerIframe;
+      if (frame?.contentWindow && event.source === frame.contentWindow) close();
+      return;
+    }
+
     onMessage?.(message);
   };
 
@@ -121,7 +133,11 @@
     orderId: number;
     planId: number;
   };
-  type ReservineMessage = ReservineNavigationMessage | ReservineMembershipPurchasedMessage;
+  type ReservineCloseMessage = { type: typeof IntegrationConstants.reservineClose };
+  type ReservineMessage =
+    | ReservineNavigationMessage
+    | ReservineMembershipPurchasedMessage
+    | ReservineCloseMessage;
 
   const isPlainObject = (value: unknown): value is Record<string, unknown> =>
     typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -144,6 +160,8 @@
     if (type === IntegrationConstants.reservineNavigation) {
       return typeof value.route === 'string' ? { type, route: value.route } : null;
     }
+
+    if (type === IntegrationConstants.reservineClose) return { type };
 
     if (type === IntegrationConstants.reservineMembershipPurchased) {
       const orderId = finiteNumber(value.orderId);
@@ -267,6 +285,7 @@
     <Drawer.Content class="r-drawer-content">
       <div style="width: 100%!important; height: 100%!important;">
         <iframe
+          bind:this={drawerIframe}
           title="Reservine"
           allow="payment"
           src={$iframeSrc}

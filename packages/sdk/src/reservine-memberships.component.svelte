@@ -249,6 +249,8 @@
     url.searchParams.set(IntegrationConstants.reservineTheme, mode);
     if (primaryHex) url.searchParams.set(IntegrationConstants.reservinePrimary, primaryHex.slice(1));
     if (selectedBilling) url.searchParams.set(IntegrationConstants.billing, selectedBilling);
+    // Tells the checkout this host closes on `reservine-close`, so it may offer its own Close.
+    url.searchParams.set(IntegrationConstants.reservineCanClose, '1');
     // The embed page posts the purchase back to this origin when the host's
     // Referrer-Policy strips document.referrer.
     if (typeof window !== 'undefined') {
@@ -277,9 +279,18 @@
     hostElement()?.dispatchEvent(new CustomEvent(type, { detail, bubbles: true, composed: true }));
   };
 
-  const openPlan = (planId: number | null, billing: MembershipBilling | null): void => {
+  /** What had focus when the checkout opened: a card's Buy button, or the host's own control. */
+  let opener: HTMLElement | null = null;
+
+  const openPlan = (
+    planId: number | null,
+    billing: MembershipBilling | null,
+    from: HTMLElement | null = null
+  ): void => {
     selectedPlanId = planId;
     selectedBilling = billing;
+    const active = typeof document !== 'undefined' ? document.activeElement : null;
+    opener = from ?? (active instanceof HTMLElement ? active : null);
     shell?.open();
   };
 
@@ -294,6 +305,12 @@
 
   const handleOpenChange = (isOpen: boolean): void => {
     emit(RESERVINE_OPEN_CHANGE_EVENT, { open: isOpen });
+    if (isOpen) return;
+    // The checkout frame held focus and is gone: hand it back to what opened the checkout, after
+    // the modal's own restore (which only knows the element host, not the button in its shadow).
+    const target = opener;
+    opener = null;
+    if (target) setTimeout(() => target.isConnected && target.focus(), 0);
   };
 
   const isPurchasedMessage = (
@@ -812,7 +829,7 @@
                   class="rm-buy"
                   data-plan-buy={card.plan.id}
                   aria-label="{buyText || copy.buy} – {card.plan.name}"
-                  on:click={() => openPlan(card.plan.id, membershipBilling(kind))}
+                  on:click={(event) => openPlan(card.plan.id, membershipBilling(kind), event.currentTarget)}
                 >
                   {buyText || copy.buy}
                 </button>
