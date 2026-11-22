@@ -55,6 +55,8 @@
   let useModal = false;
   let modalContentRef: { getContentElement(): Element | null } | undefined;
   let iframeElement: HTMLIFrameElement | undefined;
+  /** The drawer's iframe (the modal's is `iframeElement`, mounted outside the shadow DOM). */
+  let drawerIframe: HTMLIFrameElement | undefined;
 
   const mountModalIframe = (slotContent: Element): void => {
     if (!iframeElement) {
@@ -111,8 +113,11 @@
 
     // The embedded app has its own "Close" action (after a purchase): it cannot reach the
     // host's modal or drawer, so it asks and the shell closes exactly as its own control does.
+    // Only this shell's own frame may ask: another same-origin Reservine frame on the page (a
+    // second widget, the booking button) must not close a window it does not sit in.
     if (message.type === IntegrationConstants.reservineClose) {
-      close();
+      const frame = useModal ? iframeElement : drawerIframe;
+      if (frame?.contentWindow && event.source === frame.contentWindow) close();
       return;
     }
 
@@ -280,6 +285,7 @@
     <Drawer.Content class="r-drawer-content">
       <div style="width: 100%!important; height: 100%!important;">
         <iframe
+          bind:this={drawerIframe}
           title="Reservine"
           allow="payment"
           src={$iframeSrc}

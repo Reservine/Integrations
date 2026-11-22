@@ -230,24 +230,36 @@ describe('<reservine-memberships>', () => {
     expect(navigateTopWindow).not.toHaveBeenCalled();
   });
 
-  it('tells the checkout it can close and closes when the checkout asks from its own origin', async () => {
+  it('tells the checkout it can close and closes only when its own frame asks, returning focus to Buy', async () => {
     const element = await mountElement({ partner: 'fitflow' });
     const changes: unknown[] = [];
     element.addEventListener('reservine-open-change', (event) => changes.push((event as CustomEvent).detail));
 
-    element.open(12);
+    const buy = shadow(element).querySelector<HTMLButtonElement>('[data-plan-buy="12"]');
+    buy?.focus();
+    buy?.click();
     await flush();
     expect(iframeSrc().searchParams.get('reservine-can-close')).toBe('1');
     const origin = iframeSrc().origin;
+    const frame = document.querySelector<HTMLIFrameElement>('iframe[title="Reservine"]');
+    const ask = (source: Window | null, from = origin) =>
+      window.dispatchEvent(new MessageEvent('message', { origin: from, source, data: { type: 'reservine-close' } }));
 
-    window.dispatchEvent(new MessageEvent('message', { origin: 'https://evil.example', data: { type: 'reservine-close' } }));
+    // A foreign origin, and another same-origin Reservine frame on the page, are not this window.
+    const other = document.createElement('iframe');
+    document.body.appendChild(other);
+    ask(frame?.contentWindow ?? null, 'https://evil.example');
+    ask(other.contentWindow);
+    ask(null);
     await flush();
     expect(element.opened).toBe(true);
 
-    window.dispatchEvent(new MessageEvent('message', { origin, data: { type: 'reservine-close' } }));
+    ask(frame?.contentWindow ?? null);
     await flush();
     expect(element.opened).toBe(false);
     expect(changes).toEqual([{ open: true }, { open: false }]);
+    expect(shadow(element).activeElement).toBe(buy);
+    other.remove();
   });
 
   it('closes the checkout and navigates the top window when successUrl is set', async () => {
